@@ -18,6 +18,8 @@ interface AppState {
 
   selectedMatch: MatchResult | null;
   setSelectedMatch: (match: MatchResult | null) => void;
+  selectedIndex: number;
+  setSelectedIndex: (index: number) => void;
 
   isOnboarding: boolean;
   setIsOnboarding: (v: boolean) => void;
@@ -50,6 +52,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   selectedMatch: null,
   setSelectedMatch: (match) => set({ selectedMatch: match }),
+  selectedIndex: 0,
+  setSelectedIndex: (index) => set({ selectedIndex: index }),
 
   isOnboarding: true,
   setIsOnboarding: (v) => set({ isOnboarding: v }),
