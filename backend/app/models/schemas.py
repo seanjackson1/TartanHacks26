@@ -109,6 +109,9 @@ class IngestRequest(BaseModel):
     bio: Optional[str] = None
     ideology_score: Optional[int] = Field(None, ge=1, le=10)
     instagram_handle: Optional[str] = None
+    youtube_username: Optional[str] = None
+    steam_id: Optional[str] = None
+    github_username: Optional[str] = None
 
 
 class IngestResponse(BaseModel):

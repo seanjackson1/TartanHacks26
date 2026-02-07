@@ -7,7 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.openrouter_logic import get_embedding
 from app.core.supabase_auth import get_current_user
 from app.db.supabase_client import upsert_profile
-from app.models.schemas import CLUSTER_COLORS, IngestRequest, IngestResponse, InterestCluster
+from app.models.schemas import (
+    CLUSTER_COLORS,
+    IngestRequest,
+    IngestResponse,
+    InterestCluster,
+)
 
 router = APIRouter()
 
@@ -32,7 +37,9 @@ def ingest(
     try:
         interests = [i.strip() for i in request.interests if i.strip()]
         if not interests:
-            raise HTTPException(status_code=400, detail="Interests list cannot be empty.")
+            raise HTTPException(
+                status_code=400, detail="Interests list cannot be empty."
+            )
 
         dna_parts = [
             f"Username: {request.username}",
@@ -44,7 +51,12 @@ def ingest(
         embedding = get_embedding(dna_string)
         cluster = _choose_cluster(interests)
         marker_color = CLUSTER_COLORS[cluster]
-        metadata = {"interests": interests[:5]}
+        metadata = {
+            "interests": interests[:5],
+            "youtube_username": request.youtube_username,
+            "steam_id": request.steam_id,
+            "github_username": request.github_username,
+        }
 
         location_wkt = f"SRID=4326;POINT({request.longitude} {request.latitude})"
 

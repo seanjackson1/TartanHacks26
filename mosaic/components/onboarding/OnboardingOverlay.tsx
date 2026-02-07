@@ -5,7 +5,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
 import InterestInput from "./InterestInput";
-import AuthStep from "../auth/AuthStep";
+import AuthStep from "@/components/auth/AuthStep";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
@@ -45,6 +45,7 @@ export default function OnboardingOverlay() {
       }
     };
     checkSession();
+
     return () => { mounted = false; };
   }, []);
 
