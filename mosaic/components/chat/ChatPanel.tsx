@@ -46,12 +46,12 @@ export default function ChatPanel() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -320, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-4 right-[340px] bottom-4 w-80 z-50 glass flex flex-col overflow-hidden"
+            className="fixed inset-0 z-50 glass flex flex-col overflow-hidden md:top-4 md:right-[340px] md:bottom-4 md:w-80 md:rounded-xl"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-glass-border">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
                         <span className="text-white font-bold text-xs">
                             {recipientName.slice(0, 2).toUpperCase()}
                         </span>
@@ -107,7 +107,7 @@ export default function ChatPanel() {
                     <button
                         onClick={handleSend}
                         disabled={!inputValue.trim()}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-linear-to-r from-cyan-500 to-cyan-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                     >
                         <Send size={16} />
                     </button>
