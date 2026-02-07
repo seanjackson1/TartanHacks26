@@ -18,7 +18,7 @@ export default function OnboardingOverlay() {
   const [step, setStep] = useState<OnboardingStep>("auth");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Check session on mount
+  // Check session on mount and fetch existing profile
   useEffect(() => {
     let mounted = true;
     const checkSession = async () => {
@@ -35,7 +35,30 @@ export default function OnboardingOverlay() {
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
         if (mounted && session) {
-          console.log("Session found immediately");
+          console.log("Session found, checking for existing profile...");
+          
+          // Check if user already has a profile in the backend
+          try {
+            const existingProfile = await api.getProfile();
+            console.log("Existing profile:", existingProfile);
+            
+            if (existingProfile && existingProfile.username) {
+              // User has complete profile, skip onboarding
+              console.log("Profile exists, skipping onboarding");
+              const avatarUrl = session.user?.user_metadata?.avatar_url || 
+                                session.user?.user_metadata?.picture;
+              setCurrentUser({
+                ...existingProfile,
+                avatar_url: avatarUrl,
+              });
+              setIsOnboarding(false);
+              return;
+            }
+          } catch (err) {
+            console.log("No existing profile found, showing onboarding");
+          }
+          
+          // No profile yet, show profile creation step
           setStep("profile");
         }
       } catch (err) {
@@ -47,7 +70,7 @@ export default function OnboardingOverlay() {
     checkSession();
 
     return () => { mounted = false; };
-  }, []);
+  }, [setCurrentUser, setIsOnboarding]);
 
   if (!isOnboarding) return null;
 

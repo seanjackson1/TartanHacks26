@@ -4,6 +4,7 @@ import type {
   IngestResponse,
   SearchRequest,
   SearchResponse,
+  User,
 } from "@/types/api";
 
 import { supabase } from "@/lib/supabase";
@@ -33,9 +34,36 @@ async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
   return res.json();
 }
 
+async function get<TRes>(path: string): Promise<TRes | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    console.warn("No auth token found for request to", path);
+    return null;
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+  });
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    const err = await res.text();
+    console.error(`API Error details for ${path}:`, err, res.status);
+    return null;
+  }
+  return res.json();
+}
+
 export const api = {
   ingest: (data: IngestRequest) =>
     post<IngestRequest, IngestResponse>("/ingest", data),
   search: (data: SearchRequest) =>
     post<SearchRequest, SearchResponse>("/search", data),
+  getProfile: () => get<User>("/profile"),
 };
+
