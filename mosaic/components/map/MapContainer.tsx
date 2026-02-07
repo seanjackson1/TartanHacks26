@@ -110,6 +110,7 @@ const createClusterIcon = (cluster: any) => {
 export default function MosaicMap({ markers }: { markers: User[] }) {
   const [isMounted, setIsMounted] = useState(false);
   const matches = useAppStore((s) => s.matches);
+  const currentUser = useAppStore((s) => s.currentUser);
   const setSelectedMatch = useAppStore((s) => s.setSelectedMatch);
   const setSelectedIndex = useAppStore((s) => s.setSelectedIndex);
 
@@ -165,6 +166,7 @@ export default function MosaicMap({ markers }: { markers: User[] }) {
                   user={user}
                   delay={0}
                   score={match?.similarity_score ?? 0}
+                  isCurrentUser={currentUser?.id === user.id}
                   onClick={() => {
                     if (match) {
                       setSelectedMatch(match);
