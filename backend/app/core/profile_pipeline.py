@@ -7,6 +7,7 @@ from typing import Any
 
 from app.core.openrouter_logic import generate_profile_summary, get_embedding
 from app.db.supabase_client import get_oauth_account
+from app.integrations.discord import fetch_discord_interests
 from app.integrations.steam import fetch_steam_interests_sync
 from app.integrations.youtube import fetch_youtube_interests
 from app.models.schemas import CLUSTER_COLORS, InterestCluster
@@ -19,7 +20,7 @@ def choose_cluster(interests: list[str]) -> InterestCluster:
         return InterestCluster.TECH_DEV
     if any(k in blob for k in ["art", "design", "music", "creative", "photo", "film"]):
         return InterestCluster.CREATIVE_ARTS
-    if any(k in blob for k in ["game", "gaming", "esports", "steam"]):
+    if any(k in blob for k in ["game", "gaming", "esports", "steam", "discord"]):
         return InterestCluster.GAMING
     if any(k in blob for k in ["fitness", "gym", "workout", "run", "yoga", "sport"]):
         return InterestCluster.FITNESS
@@ -31,6 +32,7 @@ class PlatformInterests:
     """Container for interests from connected platforms."""
     youtube: list[str]
     steam: list[str]
+    discord: list[str]
 
 
 def fetch_platform_interests(user_id: str) -> PlatformInterests:
@@ -49,7 +51,12 @@ def fetch_platform_interests(user_id: str) -> PlatformInterests:
         if steam_interests:
             print(f"DEBUG: Found {len(steam_interests)} Steam interests")
 
-    return PlatformInterests(youtube=youtube_interests, steam=steam_interests)
+    # Discord
+    discord_interests = fetch_discord_interests(user_id) or []
+    if discord_interests:
+        print(f"DEBUG: Found {len(discord_interests)} Discord interests")
+
+    return PlatformInterests(youtube=youtube_interests, steam=steam_interests, discord=discord_interests)
 
 
 def merge_interests(
@@ -67,7 +74,7 @@ def merge_interests(
     Returns:
         Combined list of all interests
     """
-    all_interests = user_interests + platform.youtube + platform.steam
+    all_interests = user_interests + platform.youtube + platform.steam + platform.discord
     if dedupe:
         return list(dict.fromkeys(all_interests))
     return all_interests
@@ -82,6 +89,7 @@ class ProfilePipelineResult:
     all_interests: list[str]
     youtube_interests: list[str]
     steam_interests: list[str]
+    discord_interests: list[str]
 
 
 def run_profile_pipeline(
@@ -116,6 +124,7 @@ def run_profile_pipeline(
             interests=all_interests,
             youtube_interests=platform.youtube,
             steam_interests=platform.steam,
+            discord_interests=platform.discord,
         )
     except Exception as exc:
         print(f"DEBUG: summary generation failed: {exc}")
@@ -144,4 +153,5 @@ def run_profile_pipeline(
         all_interests=all_interests,
         youtube_interests=platform.youtube,
         steam_interests=platform.steam,
+        discord_interests=platform.discord,
     )

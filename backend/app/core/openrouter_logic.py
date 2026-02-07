@@ -52,6 +52,7 @@ def generate_profile_summary(
     interests: list[str],
     youtube_interests: list[str],
     steam_interests: list[str],
+    discord_interests: list[str] | None = None,
 ) -> str:
     """Generate a short natural-language profile summary for dna_string."""
     client = _client()
@@ -65,6 +66,7 @@ def generate_profile_summary(
         "interests": interests[:30],
         "youtube_interests": youtube_interests[:30],
         "steam_interests": steam_interests[:30],
+        "discord_interests": (discord_interests or [])[:30],
     }
     response = client.chat.completions.create(
         model=TEXT_MODEL,
