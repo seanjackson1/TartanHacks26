@@ -8,6 +8,7 @@ import InterestInput from "./InterestInput";
 import AuthStep from "@/components/auth/AuthStep";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import WorldMapBackground from "./WorldMapBackground";
 
 type OnboardingStep = "auth" | "profile";
 
@@ -147,64 +148,122 @@ export default function OnboardingOverlay() {
               isolation: isolate;
               background: linear-gradient(
                 315deg,
-                #0A0E17 6%,
-                #141B2D 40%,
-                #1E293B 72%,
+                #0A0E17 0%,
+                #0D1220 25%,
+                #141B2D 50%,
+                #0D1220 75%,
                 #0A0E17 100%
               );
-              animation: gradient 15s ease infinite;
               background-size: 400% 400%;
-              background-attachment: fixed;
+              animation: gradient 20s ease infinite;
             }
 
+            /* Colorful aurora orbs */
             .mosaic-bg::before {
               content: "";
               position: absolute;
+              top: -50%;
+              left: -50%;
+              width: 200%;
+              height: 200%;
+              background: 
+                radial-gradient(ellipse 40% 60% at 20% 30%, rgba(139, 92, 246, 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 40% at 80% 20%, rgba(0, 242, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 35% 50% at 70% 70%, rgba(255, 0, 122, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 45% 35% at 30% 80%, rgba(251, 191, 36, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 30% 45% at 50% 50%, rgba(173, 255, 47, 0.1) 0%, transparent 40%);
+              animation: aurora 15s ease-in-out infinite;
+              z-index: 1;
+            }
+
+            /* Secondary aurora layer */
+            .mosaic-bg::after {
+              content: "";
+              position: absolute;
               inset: 0;
-              background: rgba(10, 14, 23, 0.78);
-              z-index: 0;
+              background: 
+                radial-gradient(ellipse 60% 40% at 10% 90%, rgba(0, 242, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse 40% 60% at 90% 10%, rgba(168, 85, 247, 0.18) 0%, transparent 45%);
+              animation: aurora 12s ease-in-out infinite reverse;
+              z-index: 1;
+            }
+
+            @keyframes aurora {
+              0%, 100% {
+                transform: translate(0%, 0%) rotate(0deg);
+                opacity: 1;
+              }
+              25% {
+                transform: translate(2%, -2%) rotate(1deg);
+                opacity: 0.9;
+              }
+              50% {
+                transform: translate(-1%, 1%) rotate(-1deg);
+                opacity: 1;
+              }
+              75% {
+                transform: translate(-2%, -1%) rotate(0.5deg);
+                opacity: 0.95;
+              }
             }
 
             @keyframes gradient {
-              0% {
-                background-position: 0% 0%;
+              0%, 100% {
+                background-position: 0% 50%;
               }
               50% {
-                background-position: 100% 100%;
-              }
-              100% {
-                background-position: 0% 0%;
+                background-position: 100% 50%;
               }
             }
 
+            /* Rainbow waves */
             .wave {
-              background: rgba(0, 242, 255, 0.16);
               border-radius: 1000% 1000% 0 0;
               position: fixed;
               width: 200%;
-              height: 12em;
-              animation: wave 10s -3s linear infinite;
+              height: 10em;
               transform: translate3d(0, 0, 0);
-              opacity: 0.6;
               bottom: 0;
               left: 0;
               z-index: 9998;
             }
 
+            .wave:nth-of-type(1) {
+              background: linear-gradient(90deg, 
+                rgba(0, 242, 255, 0.25) 0%, 
+                rgba(139, 92, 246, 0.25) 33%, 
+                rgba(255, 0, 122, 0.25) 66%, 
+                rgba(0, 242, 255, 0.25) 100%
+              );
+              animation: wave 12s -3s linear infinite;
+              opacity: 0.7;
+            }
+
             .wave:nth-of-type(2) {
-              bottom: -1.25em;
-              animation: wave 18s linear reverse infinite;
-              opacity: 0.5;
+              background: linear-gradient(90deg, 
+                rgba(255, 0, 122, 0.2) 0%, 
+                rgba(251, 191, 36, 0.2) 33%, 
+                rgba(173, 255, 47, 0.2) 66%, 
+                rgba(255, 0, 122, 0.2) 100%
+              );
+              bottom: -1em;
+              animation: wave 16s linear reverse infinite;
+              opacity: 0.55;
             }
 
             .wave:nth-of-type(3) {
-              bottom: -2.5em;
+              background: linear-gradient(90deg, 
+                rgba(139, 92, 246, 0.18) 0%, 
+                rgba(0, 242, 255, 0.18) 50%, 
+                rgba(139, 92, 246, 0.18) 100%
+              );
+              bottom: -2em;
               animation: wave 20s -1s reverse infinite;
-              opacity: 0.4;
+              opacity: 0.45;
             }
 
             @keyframes wave {
-              2% {
+              0%, 100% {
                 transform: translateX(0);
               }
               25% {
@@ -216,19 +275,19 @@ export default function OnboardingOverlay() {
               75% {
                 transform: translateX(-25%);
               }
-              100% {
-                transform: translateX(0);
-              }
             }
 
             @media (prefers-reduced-motion: reduce) {
               .mosaic-bg,
+              .mosaic-bg::before,
+              .mosaic-bg::after,
               .wave {
                 animation: none;
               }
             }
           `}</style>
           <div className="mosaic-bg" aria-hidden="true">
+            <WorldMapBackground />
             <div className="wave" />
             <div className="wave" />
             <div className="wave" />
