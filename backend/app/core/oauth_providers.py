@@ -46,6 +46,17 @@ def get_provider_config(provider: str) -> Optional[ProviderConfig]:
             client_id=settings.github_client_id,
             client_secret=settings.github_client_secret,
         )
+    if provider == "discord":
+        return ProviderConfig(
+            name="discord",
+            auth_url="https://discord.com/api/oauth2/authorize",
+            token_url="https://discord.com/api/oauth2/token",
+            userinfo_url="https://discord.com/api/users/@me",
+            scopes=["identify", "email", "guilds", "connections"],
+            supports_refresh=True,
+            client_id=settings.discord_client_id,
+            client_secret=settings.discord_client_secret,
+        )
     if provider in {"google", "youtube"}:
         return ProviderConfig(
             name="google",

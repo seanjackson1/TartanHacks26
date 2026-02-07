@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Youtube, Gamepad2, Github, Loader2, Sparkles } from "lucide-react";
+import { Youtube, Gamepad2, Loader2, Sparkles } from "lucide-react";
+import { siDiscord } from "simple-icons/icons";
 import PlatformConnectButton from "./PlatformConnectButton";
 
 interface OnboardingData {
@@ -211,9 +212,18 @@ export default function InterestInput({
               icon={<Gamepad2 className="w-4 h-4" />}
             />
             <PlatformConnectButton
-              provider="github"
-              label="GitHub"
-              icon={<Github className="w-4 h-4" />}
+              provider="discord"
+              label="Discord"
+              icon={
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-label="Discord"
+                >
+                  <path d={siDiscord.path} fill="currentColor" />
+                </svg>
+              }
             />
           </div>
         </div>

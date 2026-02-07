@@ -25,7 +25,7 @@ from app.models.schemas import ProfileUpdateRequest, User
 
 router = APIRouter()
 
-ALL_PROVIDERS = ["youtube", "steam", "github", "spotify"]
+ALL_PROVIDERS = ["youtube", "steam", "github", "spotify", "discord"]
 
 
 class ConnectionsResponse(BaseModel):

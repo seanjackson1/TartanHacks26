@@ -6,7 +6,7 @@ import { Check, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/constants";
 
 interface Props {
-    provider: "youtube" | "steam" | "spotify" | "github";
+    provider: "youtube" | "steam" | "spotify" | "github" | "discord";
     label: string;
     icon?: React.ReactNode;
 }
