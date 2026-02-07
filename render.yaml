@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: global-mosaic-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && ./start.sh
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
