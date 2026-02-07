@@ -31,6 +31,7 @@ export default function ProfileButton() {
     setCurrentUser(null);
     setIsOnboarding(true);
     setIsOpen(false);
+    window.location.reload();
   };
 
   if (!currentUser) return null;
