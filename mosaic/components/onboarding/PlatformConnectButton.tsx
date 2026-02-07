@@ -30,7 +30,18 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
             const userId = session.user.id;
             const authUrl = `${API_BASE_URL}/auth/${provider}/start?user_id=${userId}`;
 
-            // Open OAuth in a popup window
+            // Detect mobile/touch devices where popups often fail
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) ||
+                             (window.innerWidth <= 768);
+
+            if (isMobile) {
+                // On mobile, navigate directly instead of using popup
+                window.location.href = authUrl;
+                return;
+            }
+
+            // Desktop: Open OAuth in a popup window
             const width = 600;
             const height = 700;
             const left = window.screenX + (window.outerWidth - width) / 2;
@@ -41,6 +52,13 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
                 `${provider}_oauth`,
                 `width=${width},height=${height},left=${left},top=${top}`
             );
+
+            // Check if popup was blocked
+            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                // Popup was blocked, fall back to direct navigation
+                window.location.href = authUrl;
+                return;
+            }
 
             // Poll for popup close (OAuth callback will close it)
             const pollTimer = setInterval(() => {

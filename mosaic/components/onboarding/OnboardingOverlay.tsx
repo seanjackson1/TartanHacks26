@@ -113,7 +113,7 @@ export default function OnboardingOverlay() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, type: "spring", damping: 25 }}
-              className="w-full max-w-2xl"
+              className="w-full max-w-xl px-4 flex justify-center"
             >
               {step === "auth" ? (
                 <AuthStep />

@@ -35,7 +35,7 @@ export default function InterestInput({
   const [username, setUsername] = useState("");
   const [interestsRaw, setInterestsRaw] = useState("");
   const [bio, setBio] = useState("");
-  const [ideologyScore, setIdeologyScore] = useState(5);
+
   const [instagramHandle, setInstagramHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +65,7 @@ export default function InterestInput({
       username: username.trim(),
       interests,
       bio: bio.trim(),
-      ideology_score: ideologyScore,
+      ideology_score: 5, // Default value (slider removed)
       instagram_handle: instagramHandle.trim(),
       youtube_username: "", // Handled via OAuth
       steam_id: "", // Handled via OAuth  
@@ -76,7 +76,7 @@ export default function InterestInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="glass w-full max-w-md p-6 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
+      className="glass w-full max-w-lg p-6 md:p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
     >
       <div className="text-center">
         <h1 className="text-2xl font-bold text-cyan">Global Mosaic</h1>
@@ -127,24 +127,7 @@ export default function InterestInput({
         />
       </div>
 
-      {/* Ideology Slider */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs uppercase tracking-wider text-foreground/50">
-          Ideology ({ideologyScore}/10)
-        </label>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={ideologyScore}
-          onChange={(e) => setIdeologyScore(Number(e.target.value))}
-          className="w-full accent-cyan"
-        />
-        <div className="flex justify-between text-[10px] text-foreground/40">
-          <span>Progressive</span>
-          <span>Conservative</span>
-        </div>
-      </div>
+
 
       {/* Instagram Handle */}
       <div className="flex flex-col gap-1.5">
