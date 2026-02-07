@@ -56,12 +56,15 @@ export default function MosaicMap({ markers }: { markers: User[] }) {
       <MapContainer
         center={DEFAULT_MAP_CENTER}
         zoom={DEFAULT_MAP_ZOOM}
+        minZoom={3}
         zoomControl={false}
         attributionControl={false}
         preferCanvas={true}
         className="w-screen h-screen"
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
       >
-        <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
+        <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} noWrap={true} />
         <FlyToHandler />
         {markers
           .filter(

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useAppStore } from "@/store/useAppStore";
 import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -90,6 +91,11 @@ export default function ProfileButton() {
     setIsEditing(false);
   };
 
+
+  const getInitials = (name: string) => {
+    return name.slice(0, 2).toUpperCase();
+  };
+
   if (!currentUser) return null;
 
   return (
@@ -102,15 +108,20 @@ export default function ProfileButton() {
           onClick={() => setIsOpen(!isOpen)}
           className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
         >
-          {currentUser.avatar_url ? (
-            <img
-              src={currentUser.avatar_url}
-              alt={currentUser.username}
+          {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
+            <Image
+              src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
+              alt={currentUser.username || "Profile"}
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
+              unoptimized={false}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
-              <User className="w-6 h-6 text-white" />
+              <span className="text-white font-bold text-lg">
+                {getInitials(currentUser.username)}
+              </span>
             </div>
           )}
         </motion.button>
@@ -141,15 +152,20 @@ export default function ProfileButton() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/20">
-                  {currentUser.avatar_url ? (
-                    <img
-                      src={currentUser.avatar_url}
-                      alt={currentUser.username}
+                  {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
+                    <Image
+                      src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
+                      alt={currentUser.username || "Profile"}
+                      width={56}
+                      height={56}
                       className="w-full h-full object-cover"
+                      unoptimized={false}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
-                      <User className="w-7 h-7 text-white" />
+                      <span className="text-white font-bold text-xl">
+                        {getInitials(currentUser.username)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -225,12 +241,12 @@ export default function ProfileButton() {
                     />
                   ) : currentUser.instagram_handle ? (
                     <a
-                      href={`https://instagram.com/${currentUser.instagram_handle}`}
+                      href={`https://instagram.com/${currentUser.instagram_handle.replace(/^@/, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-white text-sm hover:text-pink-400 transition-colors"
                     >
-                      @{currentUser.instagram_handle}
+                      @{currentUser.instagram_handle.replace(/^@/, '')}
                     </a>
                   ) : (
                     <span className="text-white/40 text-sm">Not set</span>
