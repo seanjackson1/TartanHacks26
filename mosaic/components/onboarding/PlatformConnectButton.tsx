@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Check, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/constants";
 
 interface Props {
     provider: "youtube" | "steam" | "spotify" | "github";
     label: string;
     icon?: React.ReactNode;
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function PlatformConnectButton({ provider, label, icon }: Props) {
     const [loading, setLoading] = useState(false);
