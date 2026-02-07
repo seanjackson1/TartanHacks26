@@ -108,6 +108,7 @@ def generate_similarity_summary(interests_1: list[str], interests_2: list[str]) 
         "You are a helpful assistant. Given two users' interest lists, write a short sentence "
         "describing what they SPECIFICALLY have in common. You MUST name 2-3 actual shared "
         "interests, games, channels, servers, or hobbies that appear in BOTH lists. "
+        "You MUST use the interest lists as evidence for your claims of similar items. "
         "Do NOT be generic or vague. Look for exact matches or very similar items. "
         "Good: 'You both play Terraria, are in CMU Esports, and watch FitnessFAQs.' "
         "Start with 'You both' and keep it under 20 words."
