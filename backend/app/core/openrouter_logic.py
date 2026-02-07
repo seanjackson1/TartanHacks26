@@ -1,4 +1,4 @@
-"""OpenRouter embedding logic using intfloat/e5-large-v2 (1024 dimensions)."""
+"""OpenRouter embedding and text generation logic."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ from openai import OpenAI
 
 from app.config import settings
 
-MODEL_NAME = "intfloat/e5-large-v2"
+EMBED_MODEL = "intfloat/e5-large-v2"
+TEXT_MODEL = "openai/gpt-4o-mini"
 
 
 def _client() -> OpenAI:
@@ -29,7 +30,7 @@ def get_embedding(dna_string: str) -> List[float]:
         raise ValueError("dna_string must be a non-empty string.")
 
     client = _client()
-    response = client.embeddings.create(model=MODEL_NAME, input=dna_string)
+    response = client.embeddings.create(model=EMBED_MODEL, input=dna_string)
     return response.data[0].embedding
 
 
@@ -40,5 +41,44 @@ def get_embeddings(texts: Iterable[str]) -> List[List[float]]:
         raise ValueError("texts must contain at least one non-empty string.")
 
     client = _client()
-    response = client.embeddings.create(model=MODEL_NAME, input=batch)
+    response = client.embeddings.create(model=EMBED_MODEL, input=batch)
     return [item.embedding for item in response.data]
+
+
+def generate_profile_summary(
+    *,
+    username: str,
+    bio: str | None,
+    interests: list[str],
+    youtube_interests: list[str],
+    steam_interests: list[str],
+) -> str:
+    """Generate a short natural-language profile summary for dna_string."""
+    client = _client()
+    system = (
+        "You are a helpful assistant that writes a neutral profile summary paragraph. "
+        "Return a single paragraph of 4-6 sentences, no bullet points, no emojis."
+    )
+    user = {
+        "username": username,
+        "bio": bio,
+        "interests": interests[:30],
+        "youtube_interests": youtube_interests[:30],
+        "steam_interests": steam_interests[:30],
+    }
+    response = client.chat.completions.create(
+        model=TEXT_MODEL,
+        temperature=0.2,
+        messages=[
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": (
+                "Write a profile summary paragraph based on this data:\n"
+                    f"{user}"
+                ),
+            },
+        ],
+    )
+    content = response.choices[0].message.content or ""
+    return content.strip()
