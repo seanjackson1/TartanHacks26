@@ -151,10 +151,10 @@ export default function ProfileCard() {
               <span className="text-xs uppercase tracking-wider text-foreground/50">
                 Interests
               </span>
-              {/* <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 {(
                   (selectedMatch.user.metadata?.top_interests || selectedMatch.user.metadata?.all_interests || []) as string[]
-                ).map((interest: string, i: number) => (
+                ).slice(0, 5).map((interest: string, i: number) => (
                   <span
                     key={i}
                     className="px-2 py-1 text-xs rounded-full bg-cyan/10 text-cyan border border-cyan/20"
@@ -162,7 +162,7 @@ export default function ProfileCard() {
                     {interest}
                   </span>
                 ))}
-              </div> */}
+              </div>
             </div>
           )}
 
