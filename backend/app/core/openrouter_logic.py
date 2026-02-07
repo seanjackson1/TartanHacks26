@@ -86,45 +86,51 @@ def generate_profile_summary(
     return content.strip()
 
 
-def generate_similarity_summary(dna_string_1: str, dna_string_2: str) -> str:
+def generate_similarity_summary(interests_1: list[str], interests_2: list[str]) -> str:
     """Generate a 1-sentence summary of what two users have in common.
     
     Args:
-        dna_string_1: First user's profile DNA string
-        dna_string_2: Second user's profile DNA string
+        interests_1: First user's all_interests list
+        interests_2: Second user's all_interests list
     
     Returns:
         A short sentence describing shared interests/traits
     """
-    if not dna_string_1 or not dna_string_2:
+    if not interests_1 or not interests_2:
         return "You both share similar interests."
+    
+    # Truncate long lists to avoid token limits
+    interests_1_str = ", ".join(interests_1[:40])
+    interests_2_str = ", ".join(interests_2[:40])
     
     client = _client()
     system = (
-        "You are a helpful assistant. Given two user profiles, write a short sentence "
+        "You are a helpful assistant. Given two users' interest lists, write a short sentence "
         "describing what they SPECIFICALLY have in common. You MUST name 2-3 actual shared "
-        "interests, games, channels, or hobbies from their profiles. Do NOT be generic or vague. "
-        "Bad: 'You both enjoy gaming and YouTube content.' "
-        "Good: 'You both are into Counter-Strike, watch MrBeast, and enjoy hiking.' "
+        "interests, games, channels, servers, or hobbies that appear in BOTH lists. "
+        "You MUST use the interest lists as evidence for your claims of similar items. "
+        "Do NOT be generic or vague. Look for exact matches or very similar items. "
+        "Good: 'You both play Terraria, are in CMU Esports, and watch FitnessFAQs.' "
         "Start with 'You both' and keep it under 20 words."
     )
     
     response = client.chat.completions.create(
         model=TEXT_MODEL,
-        temperature=0.4,
-        max_tokens=80,
+        temperature=0.3,
+        max_tokens=60,
         messages=[
             {"role": "system", "content": system},
             {
                 "role": "user",
                 "content": (
-                    f"User 1: {dna_string_1}\n\n"
-                    f"User 2: {dna_string_2}\n\n"
-                    "What do they have in common?"
+                    f"User 1 interests: {interests_1_str}\n\n"
+                    f"User 2 interests: {interests_2_str}\n\n"
+                    "What specific things do they have in common?"
                 ),
             },
         ],
     )
     content = response.choices[0].message.content or ""
     return content.strip()
+
 
