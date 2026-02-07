@@ -16,73 +16,71 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
     const [loading, setLoading] = useState(false);
     const [connected, setConnected] = useState(false);
 
-    const handleConnect = async () => {
+    const handleConnect = () => {
         setLoading(true);
-        try {
-            // Get the current user's Supabase UUID
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user?.id) {
-                console.error("No user session found");
-                setLoading(false);
-                return;
-            }
+        
+        // CRITICAL: Open window synchronously on click to avoid popup blockers on iOS Safari
+        // Must be called directly in the click handler, not after any async operation
+        const width = 600;
+        const height = 700;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+        
+        // Open with about:blank immediately, we'll set the real URL after getting the session
+        const authWindow = window.open(
+            'about:blank',
+            `${provider}_oauth`,
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
 
-            const userId = session.user.id;
-            const authUrl = `${API_BASE_URL}/auth/${provider}/start?user_id=${userId}`;
-
-            // Detect mobile/touch devices where popups often fail
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
-                             ('ontouchstart' in window) ||
-                             (window.innerWidth <= 768);
-
-            if (isMobile) {
-                // On mobile, open in a new tab instead of popup
-                window.open(authUrl, '_blank');
-                setLoading(false);
-                return;
-            }
-
-            // Desktop: Open OAuth in a popup window
-            const width = 600;
-            const height = 700;
-            const left = window.screenX + (window.outerWidth - width) / 2;
-            const top = window.screenY + (window.outerHeight - height) / 2;
-
-            const popup = window.open(
-                authUrl,
-                `${provider}_oauth`,
-                `width=${width},height=${height},left=${left},top=${top}`
-            );
-
-            // Check if popup was blocked
-            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-                // Popup was blocked, fall back to direct navigation
-                window.location.href = authUrl;
-                return;
-            }
-
-            // Poll for popup close (OAuth callback will close it)
-            const pollTimer = setInterval(() => {
-                if (popup?.closed) {
-                    clearInterval(pollTimer);
-                    setConnected(true);
+        // Now do async work
+        (async () => {
+            try {
+                // Get the current user's Supabase UUID
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user?.id) {
+                    console.error("No user session found");
+                    authWindow?.close();
                     setLoading(false);
+                    return;
                 }
-            }, 500);
 
-            // Timeout after 5 minutes
-            setTimeout(() => {
-                clearInterval(pollTimer);
-                if (!popup?.closed) {
-                    popup?.close();
+                const userId = session.user.id;
+                const authUrl = `${API_BASE_URL}/auth/${provider}/start?user_id=${userId}`;
+
+                // Navigate the already-open window to the auth URL
+                if (authWindow && !authWindow.closed) {
+                    authWindow.location.href = authUrl;
+                } else {
+                    // Window was closed or blocked, fall back to same-page navigation
+                    window.location.href = authUrl;
+                    return;
                 }
+
+                // Poll for window close (OAuth callback will close it)
+                const pollTimer = setInterval(() => {
+                    if (authWindow?.closed) {
+                        clearInterval(pollTimer);
+                        setConnected(true);
+                        setLoading(false);
+                    }
+                }, 500);
+
+                // Timeout after 5 minutes
+                setTimeout(() => {
+                    clearInterval(pollTimer);
+                    if (!authWindow?.closed) {
+                        authWindow?.close();
+                    }
+                    setLoading(false);
+                }, 5 * 60 * 1000);
+
+            } catch (error) {
+                console.error("OAuth connect failed:", error);
+                authWindow?.close();
                 setLoading(false);
-            }, 5 * 60 * 1000);
-
-        } catch (error) {
-            console.error("OAuth connect failed:", error);
-            setLoading(false);
-        }
+            }
+        })();
     };
 
     if (connected) {
