@@ -250,9 +250,9 @@ export default function InterestInput({
           w-full py-3 rounded-md font-semibold mb-4
           transition-all duration-150 relative overflow-hidden
           ${isSubmitting
-              ? 'bg-foam/50 cursor-wait'
-              : 'bg-foam hover:bg-foam/90'}
-          text-abyss
+              ? 'bg-cta-muted cursor-wait'
+              : 'bg-cta hover:bg-cta-strong'}
+          text-abyss shadow-cta
           disabled:opacity-70
         `}
         >
@@ -270,68 +270,121 @@ export default function InterestInput({
         </motion.button>
       </form>
       <style jsx>{`
+        /* Card - Night Sky gradient */
         .mosaic-card {
           background: linear-gradient(
             180deg, 
-            rgba(2, 6, 23, 0.95), 
-            rgba(10, 37, 64, 0.92)
+            rgba(10, 14, 23, 0.97), 
+            rgba(20, 27, 45, 0.95)
           );
-          border: 1px solid rgba(126, 230, 230, 0.12);
+          border: 1px solid rgba(30, 41, 59, 0.6);
           box-shadow: 
-            0 10px 40px rgba(2, 6, 23, 0.6),
-            0 0 60px rgba(15, 185, 177, 0.08),
-            inset 0 1px 0 rgba(126, 230, 230, 0.05);
+            0 10px 40px rgba(10, 14, 23, 0.7),
+            0 0 80px rgba(0, 242, 255, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.03);
           border-radius: 16px;
         }
 
+        /* Inputs - Slate Blue borders */
         .mosaic-input {
-          background: rgba(2, 6, 23, 0.6);
-          border: 1px solid rgba(15, 185, 177, 0.15);
+          background: rgba(10, 14, 23, 0.7);
+          border: 1px solid #1E293B;
           border-radius: 8px;
           padding: 0.625rem 0.875rem;
-          color: rgba(255, 255, 255, 0.9);
+          color: #F1F5F9;
           transition: all 200ms ease;
         }
 
         .mosaic-input::placeholder {
-          color: rgba(126, 230, 230, 0.35);
+          color: #64748B;
         }
 
         .mosaic-input:focus {
           outline: none;
-          border-color: #0FB9B1;
-          box-shadow: 0 0 0 3px rgba(15, 185, 177, 0.15);
+          border-color: #00F2FF;
+          box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.15);
         }
 
         .mosaic-input:hover:not(:focus) {
-          border-color: rgba(15, 185, 177, 0.3);
+          border-color: rgba(0, 242, 255, 0.4);
         }
 
+        /* Secondary buttons */
         .mosaic-secondary {
-          background: rgba(10, 37, 64, 0.5);
-          border: 1px solid rgba(15, 185, 177, 0.25);
+          background: rgba(20, 27, 45, 0.6);
+          border: 1px solid #1E293B;
           border-radius: 8px;
           padding: 0.625rem 0.875rem;
           font-size: 0.875rem;
+          color: #F1F5F9;
           transition: all 200ms ease;
         }
 
         .mosaic-secondary:hover {
-          background: rgba(15, 185, 177, 0.1);
-          border-color: rgba(15, 185, 177, 0.4);
+          background: rgba(0, 242, 255, 0.08);
+          border-color: #00F2FF;
         }
 
-        .text-foam { color: #7EE6E6; }
-        .text-teal { color: #0FB9B1; }
-        .text-violet { color: #6A5ACD; }
-        .text-muted { color: rgba(126, 230, 230, 0.5); }
-        .text-warn { color: #FF6B8A; }
-        .text-abyss { color: #020617; }
-        .border-warn { border-color: #FF6B8A; }
-        .bg-foam { background-color: #7EE6E6; }
-        .bg-teal { background-color: #0FB9B1; }
-        .bg-deep-sea { background-color: #0A2540; }
-        .bg-abyss { background-color: #020617; }
+        /* Core Colors */
+        .text-cloud { color: #F1F5F9; }
+        .text-muted { color: #64748B; }
+        .text-foam { color: #00F2FF; }
+        .text-abyss { color: #0A0E17; }
+        
+        /* Accent Colors */
+        .text-cyan { color: #00F2FF; }
+        .text-magenta { color: #FF007A; }
+        .text-lime { color: #ADFF2F; }
+        .text-orange { color: #FFA500; }
+        .text-purple { color: #8B5CF6; }
+        .text-golden { color: #FBBF24; }
+        
+        /* Semantic Colors */
+        .text-success { color: #22C55E; }
+        .text-warn { color: #F59E0B; }
+        .text-error { color: #EF4444; }
+        .text-info { color: #3B82F6; }
+        
+        /* Border Colors */
+        .border-warn { border-color: #F59E0B; }
+        .border-error { border-color: #EF4444; }
+        
+        /* Background Colors */
+        .bg-deep-space { background-color: #0A0E17; }
+        .bg-midnight { background-color: #141B2D; }
+        .bg-slate { background-color: #1E293B; }
+        .bg-cyan { background-color: #00F2FF; }
+        .bg-foam { background-color: #00F2FF; }
+        .bg-cta {
+          background: linear-gradient(135deg, #00F2FF 0%, #8B5CF6 100%);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .bg-cta-strong {
+          background: linear-gradient(135deg, #3AF7FF 0%, #A78BFA 100%);
+          border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+        .bg-cta-muted {
+          background: linear-gradient(
+            135deg,
+            rgba(0, 242, 255, 0.5) 0%,
+            rgba(139, 92, 246, 0.5) 100%
+          );
+          border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+        .shadow-cta {
+          box-shadow:
+            0 0 20px rgba(0, 242, 255, 0.5),
+            0 0 40px rgba(139, 92, 246, 0.3),
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+        .shadow-cta:hover {
+          box-shadow:
+            0 0 30px rgba(0, 242, 255, 0.7),
+            0 0 60px rgba(139, 92, 246, 0.5),
+            0 12px 40px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
       `}</style>
     </div>
   );
