@@ -1,0 +1,22 @@
+# FastAPI Backend Dependencies
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+
+# OpenAI
+openai>=1.10.0
+
+# Supabase
+supabase>=2.3.0
+
+# Spotify Integration
+spotipy>=2.23.0
+
+# Utilities
+httpx>=0.26.0
+numpy>=1.26.0
+
+# PostGIS helpers (optional)
+# geoalchemy2>=0.14.0
+# shapely>=2.0.0
