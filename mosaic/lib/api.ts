@@ -6,10 +6,23 @@ import type {
   SearchResponse,
 } from "@/types/api";
 
+import { supabase } from "@/lib/supabase";
+
 async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+     // In a real app, might want to redirect to login or throw specific error
+     console.warn("No auth token found for request to", path);
+  }
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
