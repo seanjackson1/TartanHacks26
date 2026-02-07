@@ -15,13 +15,13 @@ async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
   const token = session?.access_token;
 
   if (!token) {
-     // In a real app, might want to redirect to login or throw specific error
-     console.warn("No auth token found for request to", path);
+    // In a real app, might want to redirect to login or throw specific error
+    console.warn("No auth token found for request to", path);
   }
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
@@ -45,7 +45,31 @@ async function patch<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "PATCH",
-    headers: { 
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`API Error details for ${path}:`, err, res.status);
+    throw new Error(`API ${path} failed (${res.status}): ${err}`);
+  }
+  return res.json();
+}
+
+async function put<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    throw new Error("No auth token found");
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
@@ -70,7 +94,7 @@ async function get<TRes>(path: string): Promise<TRes | null> {
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
@@ -84,6 +108,17 @@ async function get<TRes>(path: string): Promise<TRes | null> {
   return res.json();
 }
 
+export interface ConnectionsResponse {
+  connected: string[];
+  available: string[];
+}
+
+export interface RefreshResponse {
+  success: boolean;
+  interests_count: number;
+  dna_string: string;
+}
+
 export const api = {
   ingest: (data: IngestRequest) =>
     post<IngestRequest, IngestResponse>("/ingest", data),
@@ -92,5 +127,9 @@ export const api = {
   getProfile: () => get<User>("/profile"),
   updateProfile: (data: ProfileUpdateRequest) =>
     patch<ProfileUpdateRequest, User>("/profile", data),
+  getConnections: () => get<ConnectionsResponse>("/profile/connections"),
+  refreshProfile: () => post<Record<string, never>, RefreshResponse>("/profile/refresh", {}),
+  updateInterests: (interests: string[]) =>
+    put<{ interests: string[] }, RefreshResponse>("/profile/interests", { interests }),
 };
 

@@ -88,6 +88,9 @@ def _fetch_userinfo(provider: str, access_token: str) -> str:
 
 @router.get("/{provider}/start")
 def oauth_start(provider: str, user_id: str):
+    # Steam uses OpenID 2.0, not OAuth2 - redirect to dedicated handler
+    if provider.lower() == "steam":
+        return steam_start(user_id)
     cfg = get_provider_config(provider)
     if not cfg:
         raise HTTPException(status_code=404, detail="Unknown provider")
@@ -110,7 +113,14 @@ def oauth_start(provider: str, user_id: str):
 
 
 @router.get("/{provider}/callback")
-def oauth_callback(provider: str, request: Request, code: str, state: str):
+def oauth_callback(
+    provider: str, request: Request, state: str, code: Optional[str] = None
+):
+    # Steam uses OpenID 2.0, not OAuth2 - redirect to dedicated handler
+    if provider.lower() == "steam":
+        return steam_callback(request, state)
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing code parameter")
     payload = _verify_state(state)
     if payload.get("provider") != provider:
         raise HTTPException(status_code=400, detail="Provider mismatch")
@@ -179,14 +189,15 @@ def oauth_refresh(provider: str, user_id: str):
 @router.get("/steam/start")
 def steam_start(user_id: str):
     state = _sign_state({"user_id": user_id, "provider": "steam", "ts": time.time()})
+    # Include state in return_to URL since Steam OpenID doesn't forward custom params
+    return_url = f"{settings.oauth_redirect_base_url}/auth/steam/callback?state={state}"
     params = {
         "openid.ns": "http://specs.openid.net/auth/2.0",
         "openid.mode": "checkid_setup",
-        "openid.return_to": f"{settings.oauth_redirect_base_url}/auth/steam/callback",
+        "openid.return_to": return_url,
         "openid.realm": settings.oauth_redirect_base_url,
         "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
         "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
-        "state": state,
     }
     url = "https://steamcommunity.com/openid/login?" + urlencode(params)
     return RedirectResponse(url)

@@ -68,6 +68,19 @@ def get_oauth_account(user_id: str, provider: str) -> Optional[dict[str, Any]]:
     return data[0] if isinstance(data, list) and data else None
 
 
+def get_connected_providers(user_id: str) -> list[str]:
+    """Get list of OAuth providers connected by a user."""
+    url = f"{_rest_base()}/{OAUTH_TABLE}"
+    query = {
+        "user_id": f"eq.{user_id}",
+        "select": "provider",
+    }
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return [row["provider"] for row in data] if isinstance(data, list) else []
+
+
 def upsert_profile(
     *,
     user_id: Optional[str] = None,

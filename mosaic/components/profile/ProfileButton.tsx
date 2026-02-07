@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
-import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2 } from "lucide-react";
+import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { api } from "@/lib/api";
+import { api, ConnectionsResponse } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/constants";
 
 export default function ProfileButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,15 @@ export default function ProfileButton() {
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const setIsOnboarding = useAppStore((s) => s.setIsOnboarding);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Connections state
+  const [connections, setConnections] = useState<ConnectionsResponse | null>(null);
+  const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
+
+  // Edit interests state
+  const [isEditingInterests, setIsEditingInterests] = useState(false);
+  const [interestsRaw, setInterestsRaw] = useState("");
+  const [isSavingInterests, setIsSavingInterests] = useState(false);
 
   // Edit form state
   const [editUsername, setEditUsername] = useState("");
@@ -31,6 +41,13 @@ export default function ProfileButton() {
       setEditInstagram(currentUser.instagram_handle || "");
     }
   }, [currentUser, isEditing]);
+
+  // Fetch connections when dropdown opens
+  useEffect(() => {
+    if (isOpen && !connections) {
+      api.getConnections().then(setConnections);
+    }
+  }, [isOpen, connections]);
 
   // Close on outside click
   useEffect(() => {
@@ -88,6 +105,90 @@ export default function ProfileButton() {
 
   const handleCancel = () => {
     setIsEditing(false);
+  };
+
+  const handleEditInterests = async () => {
+    // Load current interests from profile
+    const profile = await api.getProfile();
+    const allInterests = (profile?.metadata as { all_interests?: string[] } | undefined)?.all_interests || [];
+    setInterestsRaw(allInterests.join(", "));
+    setIsEditingInterests(true);
+  };
+
+  const handleSaveInterests = async () => {
+    setIsSavingInterests(true);
+    try {
+      const interests = interestsRaw.split(",").map(s => s.trim()).filter(Boolean);
+      const result = await api.updateInterests(interests);
+      if (result.success) {
+        console.log(`Interests updated with ${result.interests_count} total interests`);
+      }
+      setIsEditingInterests(false);
+    } catch (err) {
+      console.error("Failed to update interests:", err);
+    } finally {
+      setIsSavingInterests(false);
+    }
+  };
+
+  const handleConnect = async (provider: string) => {
+    setConnectingProvider(provider);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      setConnectingProvider(null);
+      return;
+    }
+
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const authWindow = window.open(
+      `${API_BASE_URL}/auth/${provider}/start?user_id=${session.user.id}`,
+      `${provider}_oauth`,
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    const pollTimer = setInterval(() => {
+      if (authWindow?.closed) {
+        clearInterval(pollTimer);
+        setConnectingProvider(null);
+        // Refresh connections and regenerate dna_string with new platform data
+        api.getConnections().then(setConnections);
+        api.refreshProfile().then((res) => {
+          if (res?.success) {
+            console.log(`Profile refreshed with ${res.interests_count} interests`);
+          }
+        }).catch(console.error);
+      }
+    }, 500);
+
+    setTimeout(() => {
+      clearInterval(pollTimer);
+      authWindow?.close();
+      setConnectingProvider(null);
+    }, 5 * 60 * 1000);
+  };
+
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case "youtube": return <Youtube className="w-4 h-4" />;
+      case "steam": return <Gamepad2 className="w-4 h-4" />;
+      case "github": return <Github className="w-4 h-4" />;
+      case "spotify": return <Music className="w-4 h-4" />;
+      default: return null;
+    }
+  };
+
+  const getProviderColor = (provider: string) => {
+    switch (provider) {
+      case "youtube": return "text-red-400 bg-red-500/20";
+      case "steam": return "text-blue-400 bg-blue-500/20";
+      case "github": return "text-gray-400 bg-gray-500/20";
+      case "spotify": return "text-green-400 bg-green-500/20";
+      default: return "text-gray-400 bg-gray-500/20";
+    }
   };
 
   if (!currentUser) return null;
@@ -237,6 +338,43 @@ export default function ProfileButton() {
                   )}
                 </div>
               </div>
+
+              {/* Connected Apps */}
+              {!isEditing && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <div className="text-xs text-white/50 uppercase tracking-wider px-3 mb-2">Connected Apps</div>
+                  <div className="space-y-1">
+                    {["youtube", "steam", "github", "spotify"].map((provider) => {
+                      const isConnected = connections?.connected.includes(provider);
+                      const isConnecting = connectingProvider === provider;
+                      return (
+                        <div
+                          key={provider}
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors"
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getProviderColor(provider)}`}>
+                            {getProviderIcon(provider)}
+                          </div>
+                          <span className="flex-1 text-white text-sm capitalize">{provider}</span>
+                          {isConnected ? (
+                            <span className="flex items-center gap-1 text-green-400 text-xs">
+                              <Check className="w-3 h-3" /> Connected
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleConnect(provider)}
+                              disabled={isConnecting}
+                              className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+                            >
+                              {isConnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -270,6 +408,45 @@ export default function ProfileButton() {
                 >
                   <Pencil className="w-4 h-4" />
                   <span className="text-sm font-medium">Edit Profile</span>
+                </button>
+              )}
+
+              {/* Edit Interests */}
+              {isEditingInterests ? (
+                <div className="space-y-2">
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Edit Interests (comma-separated)</div>
+                  <textarea
+                    value={interestsRaw}
+                    onChange={(e) => setInterestsRaw(e.target.value)}
+                    placeholder="hiking, gaming, AI/ML, music..."
+                    rows={3}
+                    className="w-full bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsEditingInterests(false)}
+                      disabled={isSavingInterests}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                    >
+                      <span className="text-sm">Cancel</span>
+                    </button>
+                    <button
+                      onClick={handleSaveInterests}
+                      disabled={isSavingInterests}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                    >
+                      {isSavingInterests ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      <span className="text-sm">Save</span>
+                    </button>
+                  </div>
+                </div>
+              ) : !isEditing && (
+                <button
+                  onClick={handleEditInterests}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm font-medium">Edit Interests</span>
                 </button>
               )}
 
