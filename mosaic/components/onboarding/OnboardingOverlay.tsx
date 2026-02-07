@@ -24,7 +24,7 @@ export default function OnboardingOverlay() {
     setIsExiting(true);
     setTimeout(() => {
       setIsOnboarding(false);
-    }, 900);
+    }, 1400);
   }, [setIsOnboarding]);
 
   // DEBUG LOGS
@@ -164,7 +164,7 @@ export default function OnboardingOverlay() {
               className="fixed inset-0 z-[10000] pointer-events-none flex items-center justify-center"
               initial={{ scale: 0, opacity: 0.7 }}
               animate={{ scale: 2.5, opacity: 0 }}
-              transition={{ duration: 0.9, delay: i * 0.12, ease: "easeOut" }}
+              transition={{ duration: 1.3, delay: i * 0.18, ease: "easeOut" }}
             >
               <div
                 className="w-[50vmax] h-[50vmax] rounded-full"
@@ -308,9 +308,9 @@ export default function OnboardingOverlay() {
             : "circle(150% at 50% 50%)",
         }}
         transition={{
-          duration: 0.8,
+          duration: 1.2,
           ease: [0.4, 0, 0.2, 1],
-          delay: isExiting ? 0.15 : 0,
+          delay: isExiting ? 0.2 : 0,
         }}
       >
         <div className="mosaic-bg" aria-hidden="true">
@@ -328,7 +328,7 @@ export default function OnboardingOverlay() {
           }}
           transition={
             isExiting
-              ? { duration: 0.2 }
+              ? { duration: 0.3 }
               : { duration: 0.3 }
           }
           className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto py-8"

@@ -32,7 +32,7 @@ export default function AuthStep() {
             opacity: 0.8,
           }}
         >
-          Discover your people. Bridge the divide.
+          Enter as individuals. Leave as a community
         </motion.p>
       </div>
 
