@@ -26,6 +26,10 @@ interface AppState {
   chatRecipientId: string | null;
   setChatRecipientId: (id: string | null) => void;
 
+  // Messaging center
+  isMessagingCenterOpen: boolean;
+  setIsMessagingCenterOpen: (v: boolean) => void;
+
   isOnboarding: boolean;
   setIsOnboarding: (v: boolean) => void;
 
@@ -65,6 +69,10 @@ export const useAppStore = create<AppState>()(
       // Chat state
       chatRecipientId: null,
       setChatRecipientId: (id) => set({ chatRecipientId: id }),
+
+      // Messaging center
+      isMessagingCenterOpen: false,
+      setIsMessagingCenterOpen: (v) => set({ isMessagingCenterOpen: v }),
 
       isOnboarding: true,
       setIsOnboarding: (v) => set({ isOnboarding: v }),

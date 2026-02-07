@@ -258,3 +258,77 @@ def get_messages_between(
     data = resp.json()
     return data if isinstance(data, list) else []
 
+
+def get_conversations(user_id: str) -> list[dict[str, Any]]:
+    """
+    Get all conversations for a user with the latest message and unread count.
+    Returns a list of conversation summaries sorted by most recent message.
+    """
+    url = f"{_rest_base()}/{MESSAGES_TABLE}"
+    # Fetch recent messages involving this user, newest first
+    query = {
+        "or": f"(sender_id.eq.{user_id},receiver_id.eq.{user_id})",
+        "order": "created_at.desc",
+        "limit": 500,
+    }
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
+    resp.raise_for_status()
+    messages = resp.json()
+    if not isinstance(messages, list):
+        return []
+
+    # Group by conversation partner
+    conversations: dict[str, dict[str, Any]] = {}
+    for msg in messages:
+        other_id = msg["receiver_id"] if msg["sender_id"] == user_id else msg["sender_id"]
+        if other_id not in conversations:
+            conversations[other_id] = {
+                "user_id": other_id,
+                "last_message": msg["content"],
+                "last_message_at": msg["created_at"],
+                "unread_count": 0,
+            }
+        # Count unread: messages sent TO this user that haven't been read
+        if msg["receiver_id"] == user_id and msg.get("read_at") is None:
+            conversations[other_id]["unread_count"] += 1
+
+    if not conversations:
+        return []
+
+    # Fetch profile info for all conversation partners
+    partner_ids = list(conversations.keys())
+    profiles = get_profiles_by_ids(partner_ids)
+    profile_map = {p["id"]: p for p in profiles}
+
+    result = []
+    for partner_id, conv in conversations.items():
+        profile = profile_map.get(partner_id, {})
+        conv["username"] = profile.get("username", "Unknown")
+        conv["avatar_url"] = profile.get("metadata", {}).get("avatar_url") if profile.get("metadata") else None
+        result.append(conv)
+
+    # Sort by most recent message
+    result.sort(key=lambda c: c["last_message_at"], reverse=True)
+    return result
+
+
+def mark_messages_read(user_id: str, sender_id: str) -> int:
+    """
+    Mark all unread messages from sender_id to user_id as read.
+    Returns the number of messages marked as read.
+    """
+    url = f"{_rest_base()}/{MESSAGES_TABLE}"
+    query = {
+        "receiver_id": f"eq.{user_id}",
+        "sender_id": f"eq.{sender_id}",
+        "read_at": "is.null",
+    }
+    payload = {"read_at": datetime.now(timezone.utc).isoformat()}
+    headers = _headers() | {"Prefer": "return=representation"}
+    resp = requests.patch(
+        url + "?" + urlencode(query), json=payload, headers=headers, timeout=10
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return len(data) if isinstance(data, list) else 0
+

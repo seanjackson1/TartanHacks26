@@ -12,7 +12,13 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPExcept
 from pydantic import BaseModel
 
 from app.core.pubsub import publish_message, subscribe_user
-from app.db.supabase_client import insert_message, get_messages_between, get_profile_by_id
+from app.db.supabase_client import (
+    insert_message,
+    get_messages_between,
+    get_profile_by_id,
+    get_conversations,
+    mark_messages_read,
+)
 
 
 router = APIRouter(prefix="/messages", tags=["messaging"])
@@ -105,6 +111,31 @@ async def websocket_endpoint(
             except asyncio.CancelledError:
                 pass
         active_connections.pop(user_id, None)
+
+
+@router.get("/conversations")
+async def get_user_conversations(
+    user_id: str = Query(..., description="Current user's ID"),
+) -> list[dict[str, Any]]:
+    """
+    Get all conversations for a user with latest message and unread count.
+    """
+    if not get_profile_by_id(user_id):
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return get_conversations(user_id)
+
+
+@router.patch("/read/{other_user_id}")
+async def mark_read(
+    other_user_id: str,
+    user_id: str = Query(..., description="Current user's ID"),
+) -> dict[str, Any]:
+    """
+    Mark all messages from other_user_id to user_id as read.
+    """
+    count = mark_messages_read(user_id, other_user_id)
+    return {"success": True, "marked_count": count}
 
 
 @router.get("/history/{other_user_id}")

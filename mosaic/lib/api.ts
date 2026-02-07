@@ -6,6 +6,7 @@ import type {
   SearchRequest,
   SearchResponse,
   User,
+  Conversation,
 } from "@/types/api";
 
 import { supabase } from "@/lib/supabase";
@@ -131,5 +132,12 @@ export const api = {
   refreshProfile: () => post<Record<string, never>, RefreshResponse>("/profile/refresh", {}),
   updateInterests: (interests: string[]) =>
     put<{ interests: string[] }, RefreshResponse>("/profile/interests", { interests }),
+  getConversations: (userId: string) =>
+    get<Conversation[]>(`/messages/conversations?user_id=${userId}`),
+  markAsRead: (otherUserId: string, userId: string) =>
+    patch<Record<string, never>, { success: boolean; marked_count: number }>(
+      `/messages/read/${otherUserId}?user_id=${userId}`,
+      {}
+    ),
 };
 

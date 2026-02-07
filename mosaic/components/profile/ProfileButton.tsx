@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppStore } from "@/store/useAppStore";
-import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles } from "lucide-react";
+import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles, MessageCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { api, ConnectionsResponse } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
@@ -16,6 +16,9 @@ export default function ProfileButton() {
   const currentUser = useAppStore((s) => s.currentUser);
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const setIsOnboarding = useAppStore((s) => s.setIsOnboarding);
+  const isMessagingCenterOpen = useAppStore((s) => s.isMessagingCenterOpen);
+  const setIsMessagingCenterOpen = useAppStore((s) => s.setIsMessagingCenterOpen);
+  const [totalUnread, setTotalUnread] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Connections state
@@ -63,6 +66,27 @@ export default function ProfileButton() {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
+
+  // Poll for unread message count
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchUnread = async () => {
+      try {
+        const convos = await api.getConversations(currentUser.id);
+        if (convos) {
+          const total = convos.reduce((sum, c) => sum + c.unread_count, 0);
+          setTotalUnread(total);
+        }
+      } catch {
+        // Silently fail
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -200,33 +224,53 @@ export default function ProfileButton() {
 
   return (
     <div ref={menuRef} className="fixed top-4 left-4 z-[1000]">
-      {/* Profile Button */}
-      <div className="relative">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
-        >
-          {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
-            <Image
-              src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
-              alt={currentUser.username || "Profile"}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-              unoptimized={false}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
-              <span className="text-white font-bold text-lg">
-                {getInitials(currentUser.username)}
-              </span>
+      <div className="flex flex-col items-center gap-2">
+        {/* Profile Button */}
+        <div className="relative">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
+          >
+            {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
+              <Image
+                src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
+                alt={currentUser.username || "Profile"}
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+                unoptimized={false}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
+                <span className="text-white font-bold text-lg">
+                  {getInitials(currentUser.username)}
+                </span>
+              </div>
+            )}
+          </motion.button>
+          {/* Online indicator - outside button to avoid clipping */}
+          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full pointer-events-none" />
+        </div>
+
+        {/* Messaging Center Button */}
+        <div className="relative" data-messaging-trigger>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsMessagingCenterOpen(!isMessagingCenterOpen)}
+            className="relative w-10 h-10 rounded-full flex items-center justify-center border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10 bg-gray-900/90 backdrop-blur-sm transition-all hover:border-cyan-400 hover:bg-gray-800/90"
+          >
+            <MessageCircle className="w-5 h-5 text-cyan-400" />
+          </motion.button>
+          {/* Unread badge */}
+          {totalUnread > 0 && (
+            <div className="absolute -bottom-0.5 -left-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 border-2 border-gray-900 text-white text-[9px] font-bold px-0.5 pointer-events-none">
+              {totalUnread > 99 ? "99+" : totalUnread}
             </div>
           )}
-        </motion.button>
-        {/* Online indicator - outside button to avoid clipping */}
-        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full pointer-events-none" />
+        </div>
       </div>
 
       {/* Dropdown Menu */}
@@ -237,7 +281,7 @@ export default function ProfileButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute top-16 left-0 w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
+            className="absolute top-[6.5rem] left-0 w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
           >
             {/* Header with avatar */}
             <div className="relative p-4 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border-b border-white/10">

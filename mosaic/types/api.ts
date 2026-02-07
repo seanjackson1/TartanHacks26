@@ -80,3 +80,12 @@ export interface SendMessageRequest {
   content: string;
 }
 
+export interface Conversation {
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+}
+

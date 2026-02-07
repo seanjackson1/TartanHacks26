@@ -7,6 +7,7 @@ import ProfileCard from "@/components/profile/ProfileCard";
 import ProfileButton from "@/components/profile/ProfileButton";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import ChatPanel from "@/components/chat/ChatPanel";
+import MessagingCenter from "@/components/chat/MessagingCenter";
 
 const MapWrapper = dynamic(() => import("@/components/map/MapWrapper"), {
   ssr: false,
@@ -20,6 +21,7 @@ export default function Home() {
       <OnboardingOverlay />
       <ControlPanel />
       <ChatPanel />
+      <MessagingCenter />
       <ProfileCard />
       <ProfileButton />
       <LoadingOverlay />
