@@ -147,10 +147,10 @@ export default function OnboardingOverlay() {
               isolation: isolate;
               background: linear-gradient(
                 315deg,
-                #020617 3%,
-                #0A2540 38%,
-                #0FB9B1 68%,
-                #6A5ACD 98%
+                #0A0E17 6%,
+                #141B2D 40%,
+                #1E293B 72%,
+                #0A0E17 100%
               );
               animation: gradient 15s ease infinite;
               background-size: 400% 400%;
@@ -161,7 +161,7 @@ export default function OnboardingOverlay() {
               content: "";
               position: absolute;
               inset: 0;
-              background: rgba(0, 0, 0, 0.72);
+              background: rgba(10, 14, 23, 0.78);
               z-index: 0;
             }
 
@@ -178,14 +178,14 @@ export default function OnboardingOverlay() {
             }
 
             .wave {
-              background: rgba(126, 230, 230, 0.22);
+              background: rgba(0, 242, 255, 0.16);
               border-radius: 1000% 1000% 0 0;
               position: fixed;
               width: 200%;
               height: 12em;
               animation: wave 10s -3s linear infinite;
               transform: translate3d(0, 0, 0);
-              opacity: 0.65;
+              opacity: 0.6;
               bottom: 0;
               left: 0;
               z-index: 9998;
@@ -194,13 +194,13 @@ export default function OnboardingOverlay() {
             .wave:nth-of-type(2) {
               bottom: -1.25em;
               animation: wave 18s linear reverse infinite;
-              opacity: 0.55;
+              opacity: 0.5;
             }
 
             .wave:nth-of-type(3) {
               bottom: -2.5em;
               animation: wave 20s -1s reverse infinite;
-              opacity: 0.45;
+              opacity: 0.4;
             }
 
             @keyframes wave {
@@ -241,8 +241,13 @@ export default function OnboardingOverlay() {
           >
             {checkingAuth ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="w-8 h-8 border-t-2 border-cyan-500 rounded-full animate-spin"></div>
-                <div className="text-white/70 font-mono tracking-wider">INITIALIZING SYSTEM...</div>
+                <div
+                  className="w-8 h-8 border-t-2 rounded-full animate-spin"
+                  style={{ borderColor: "#00F2FF" }}
+                />
+                <div className="text-[#F1F5F9]/70 font-mono tracking-wider">
+                  INITIALIZING SYSTEM...
+                </div>
               </div>
             ) : (
               <motion.div

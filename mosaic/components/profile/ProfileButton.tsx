@@ -372,14 +372,14 @@ export default function ProfileButton() {
                           </div>
                           <span className="flex-1 text-white text-sm capitalize">{provider}</span>
                           {isConnected ? (
-                            <span className="flex items-center gap-1 text-green-400 text-xs">
+                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium">
                               <Check className="w-3 h-3" /> Connected
                             </span>
                           ) : (
                             <button
                               onClick={() => handleConnect(provider)}
                               disabled={isConnecting}
-                              className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+                              className="px-4 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-all disabled:opacity-50"
                             >
                               {isConnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
                             </button>
