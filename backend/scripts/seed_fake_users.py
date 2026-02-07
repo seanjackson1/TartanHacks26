@@ -7,6 +7,7 @@ import os
 import random
 import time
 import uuid
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +119,109 @@ def _load_seed_data() -> dict[str, Any]:
     return json.loads(SEED_JSON_PATH.read_text())
 
 
+def _lookup_user_id_by_email(email: str) -> str | None:
+    url = f"{_auth_base()}/admin/users"
+    params_candidates = [
+        {"filter": email, "page": 1, "per_page": 1000},
+        {"filter": f"email:{email}", "page": 1, "per_page": 1000},
+        {"filter": f"email=={email}", "page": 1, "per_page": 1000},
+    ]
+    for params in params_candidates:
+        resp = requests.get(url, headers=_headers(), params=params, timeout=15)
+        if not resp.ok:
+            continue
+        data = resp.json()
+        users = data.get("users", [])
+        for user in users:
+            if user.get("email", "").lower() == email.lower():
+                return user.get("id")
+
+    # Fallback: paginate without filters in case filters are unsupported.
+    page = 1
+    while True:
+        resp = requests.get(
+            url,
+            headers=_headers(),
+            params={"page": page, "per_page": 1000},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        users = data.get("users", [])
+        if not users:
+            break
+        for user in users:
+            if user.get("email", "").lower() == email.lower():
+                return user.get("id")
+        page += 1
+
+    return None
+
+
+def _bio_fragment(bio: str) -> str:
+    text = bio.strip()
+    if text.endswith("."):
+        text = text[:-1]
+    if text:
+        text = text[0].lower() + text[1:]
+    return text
+
+
+def _format_list(items: list[str]) -> str:
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return f"{items[0]}, {items[1]}, and {items[2]}"
+
+
+def _make_profile_summary(
+    display_name: str,
+    bio: str,
+    interests: list[str],
+    youtube_items: list[str],
+    steam_items: list[str],
+) -> str:
+    sentences: list[str] = []
+    top_interests = random.sample(interests, k=min(3, len(interests)))
+    if top_interests:
+        sentences.append(
+            f"{display_name} is interested in {_format_list(top_interests)}."
+        )
+
+    bio_text = _bio_fragment(bio)
+    if bio_text:
+        sentences.append(f"Their bio mentions {bio_text}.")
+
+    if youtube_items:
+        picks = random.sample(youtube_items, k=min(2, len(youtube_items)))
+        sentences.append(f"They often watch videos like {_format_list(picks)}.")
+
+    if steam_items:
+        picks = random.sample(steam_items, k=min(2, len(steam_items)))
+        sentences.append(f"They play games such as {_format_list(picks)} on Steam.")
+
+    base_closers = [
+        "They balance creative and technical interests in their day-to-day.",
+        "They seem curious and open to new ideas.",
+        "They value steady learning and thoughtful collaboration.",
+        "Overall, their profile suggests a mix of focus and exploration.",
+        "They tend to explore new projects while keeping a practical mindset.",
+    ]
+
+    target = random.randint(4, 6)
+    closers = base_closers[:]
+    random.shuffle(closers)
+    while len(sentences) < target and closers:
+        sentences.append(closers.pop())
+    while len(sentences) < target:
+        sentences.append(random.choice(base_closers))
+
+    return " ".join(sentences[:target])
+
+
 
 
 def _create_auth_user(email: str, password: str) -> str:
@@ -130,17 +234,30 @@ def _create_auth_user(email: str, password: str) -> str:
     resp = requests.post(url, headers=_headers(), json=payload, timeout=15)
     if resp.status_code == 422:
         # Likely already exists; try to look it up by email
-        lookup = requests.get(
-            f"{_auth_base()}/admin/users",
-            headers=_headers(),
-            params={"email": email},
-            timeout=15,
+        try:
+            error_body = resp.json()
+        except ValueError:
+            error_body = {"raw": resp.text}
+
+        error_text = json.dumps(error_body).lower()
+        duplicate_markers = [
+            "already registered",
+            "already exists",
+            "email_exists",
+            "email already",
+            "duplicate",
+        ]
+        if not any(marker in error_text for marker in duplicate_markers):
+            raise SystemExit(
+                f"Auth create failed for {email} with 422: {error_body}"
+            )
+        user_id = _lookup_user_id_by_email(email)
+        if user_id:
+            return user_id
+        raise SystemExit(
+            "Auth lookup did not return a matching email. "
+            "Check that the admin users endpoint supports the email filter."
         )
-        lookup.raise_for_status()
-        data = lookup.json()
-        users = data.get("users", [])
-        if users:
-            return users[0]["id"]
     resp.raise_for_status()
     data = resp.json()
     return data["id"]
@@ -180,6 +297,15 @@ def main() -> None:
     if not general_pool or not youtube_pool or not steam_pool or not users:
         raise SystemExit("Seed pools are empty. Regenerate seed data.")
 
+    emails = [u.get("email") for u in users if u.get("email")]
+    email_counts = Counter(emails)
+    dup_emails = [email for email, count in email_counts.items() if count > 1]
+    if dup_emails:
+        raise SystemExit(
+            "Duplicate emails in seed data. Regenerate seed data. "
+            f"Examples: {', '.join(dup_emails[:5])}"
+        )
+
     marker_colors = ["#00F2FF", "#FF007A", "#ADFF2F", "#FFA500"]
 
     anchors = CITY_ANCHORS[:]
@@ -203,12 +329,12 @@ def main() -> None:
             steam_pool, k=min(len(steam_pool), random.randint(3, 6))
         )
 
-        dna_string = " | ".join(
-            [
-                ", ".join(interests),
-                "YouTube: " + ", ".join(youtube_items),
-                "Steam: " + ", ".join(steam_items),
-            ]
+        dna_string = _make_profile_summary(
+            user_def["display_name"],
+            user_def.get("bio", ""),
+            interests,
+            youtube_items,
+            steam_items,
         )
 
         now = time.time()
