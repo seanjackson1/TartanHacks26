@@ -33,15 +33,20 @@ export default function ControlPanel() {
       console.log("Matches length:", res.matches?.length);
       setMatches(res.matches);
       addMarkers(res.matches.map((m) => m.user));
-      // Auto-select first result
-      if (res.matches.length > 0) {
-        setSelectedIndex(0);
-        setSelectedMatch(res.matches[0]);
-      }
+      // Clear any previous selection
+      setSelectedMatch(null);
+      setSelectedIndex(-1);
     } catch (err) {
       console.error("Search failed:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExplore = () => {
+    if (matches.length > 0) {
+      setSelectedIndex(0);
+      setSelectedMatch(matches[0]);
     }
   };
 
@@ -59,6 +64,9 @@ export default function ControlPanel() {
     setSelectedMatch(matches[newIndex]);
   };
 
+  // Check if a match is currently selected
+  const hasSelection = selectedIndex !== -1;
+
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -66,7 +74,7 @@ export default function ControlPanel() {
       transition={{ delay: 0.3, type: "spring", damping: 25 }}
       className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 glass px-6 py-4 flex items-center gap-4"
     >
-      {/* Search Button */}
+      {/* Search Button - always visible */}
       <button
         onClick={handleSearch}
         className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
@@ -78,8 +86,18 @@ export default function ControlPanel() {
         Find My People
       </button>
 
-      {/* Navigation Controls - shown when there are results */}
-      {matches.length > 0 && (
+      {/* Explore Button - shown when matches exist but none selected */}
+      {matches.length > 0 && !hasSelection && (
+        <button
+          onClick={handleExplore}
+          className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90 bg-white/10 border border-white/20 text-white hover:bg-white/20"
+        >
+          Explore Connections
+        </button>
+      )}
+
+      {/* Navigation Controls - shown only when a match is selected */}
+      {matches.length > 0 && hasSelection && (
         <div className="flex items-center gap-2">
           <button
             onClick={navigateToPrev}
