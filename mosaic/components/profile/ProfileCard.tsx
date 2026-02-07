@@ -119,7 +119,8 @@ export default function ProfileCard() {
                   src={`https://www.instagram.com/${selectedMatch.user.instagram_handle.replace(/^@/, '')}/embed`}
                   className="w-full h-[400px] border-0"
                   scrolling="no"
-                  allowTransparency={true}
+                  // @ts-expect-error - allowtransparency is a valid HTML attribute but not typed in React
+                  allowtransparency="true"
                   loading="lazy"
                 />
               </div>
