@@ -95,14 +95,14 @@ export default function ProfileCard() {
           </div>
 
           {/* Interests */}
-          {Array.isArray(selectedMatch.user.metadata?.top_interests) && (
+          {(Array.isArray(selectedMatch.user.metadata?.all_interests) || Array.isArray(selectedMatch.user.metadata?.top_interests)) && (
             <div>
               <span className="text-xs uppercase tracking-wider text-foreground/50">
                 Interests
               </span>
               <div className="flex flex-wrap gap-2 mt-2">
                 {(
-                  selectedMatch.user.metadata!.top_interests as string[]
+                  (selectedMatch.user.metadata?.all_interests || selectedMatch.user.metadata?.top_interests) as string[]
                 ).map((interest: string, i: number) => (
                   <span
                     key={i}
