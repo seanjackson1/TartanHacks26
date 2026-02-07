@@ -26,7 +26,7 @@ export default function ControlPanel() {
       const res = await api.search({
         user_id: currentUser.id,
         mode: "harmony",
-        limit: 10,
+        limit: 50,
       });
       console.log("Search response:", res);
       console.log("Matches:", res.matches);

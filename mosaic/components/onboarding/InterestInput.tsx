@@ -94,13 +94,32 @@ export default function InterestInput({
     <div className="relative w-full max-w-xl">
       <form
         onSubmit={handleSubmit}
-        className="glass mosaic-card w-full p-8 md:p-10 pb-12 flex flex-col gap-6 relative z-10"
+        className="mosaic-card w-full p-8 md:p-10 pb-12 flex flex-col gap-6 relative z-10"
       >
         <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foam">
+          <h1 
+            className="text-2xl font-bold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #00F2FF 0%, #8B5CF6 25%, #FF007A 50%, #FBBF24 75%, #ADFF2F 100%)",
+              backgroundSize: "200% 200%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "rainbow-shift 8s ease infinite",
+            }}
+          >
             Global Mosaic
           </h1>
-          <p className="text-sm text-foreground/60 mt-1">
+          <p 
+            className="text-sm mt-1"
+            style={{
+              background: "linear-gradient(90deg, #00F2FF, #8B5CF6)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              opacity: 0.7,
+            }}
+          >
             Build a precise profile to find better matches.
           </p>
         </div>
@@ -161,8 +180,6 @@ export default function InterestInput({
           />
         </div>
 
-
-
         {/* Instagram Handle */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs uppercase tracking-wider text-muted">
@@ -216,11 +233,15 @@ export default function InterestInput({
               onClick={onRequestLocation}
               disabled={locationLoading}
               onBlur={() => setTouched((t) => ({ ...t, location: true }))}
-              className={`mosaic-secondary ${locationLoading
-                ? "border-foam/20 text-foam/60"
-                : "border-foam/30 text-foam hover:bg-foam/10"
-                } ${touched.location && fieldErrors.location
-                  ? "border-warn text-warn"
+              className={`
+                w-full py-3 rounded-lg font-medium transition-all duration-200
+                flex items-center justify-center gap-2
+                ${locationLoading
+                  ? "bg-slate-800/50 border border-slate-700 text-slate-500 cursor-wait"
+                  : "bg-[rgba(0,242,255,0.1)] hover:bg-[rgba(0,242,255,0.15)] border border-[rgba(0,242,255,0.3)] hover:border-[rgba(0,242,255,0.5)] text-[#00F2FF] shadow-[0_0_15px_rgba(0,242,255,0.05)] hover:shadow-[0_0_20px_rgba(0,242,255,0.15)]"
+                }
+                ${touched.location && fieldErrors.location
+                  ? "!border-warn !text-warn !bg-warn/10 !shadow-none"
                   : ""
                 }`}
             >
@@ -246,24 +267,38 @@ export default function InterestInput({
           disabled={isSubmitting}
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
-          className={`
-          w-full py-3 rounded-md font-semibold mb-4
-          transition-all duration-150 relative overflow-hidden
-          ${isSubmitting
-              ? 'bg-cta-muted cursor-wait'
-              : 'bg-cta hover:bg-cta-strong'}
-          text-abyss shadow-cta
-          disabled:opacity-70
-        `}
+          className="w-full py-4 rounded-xl font-bold text-lg mb-4 transition-all duration-200 relative overflow-hidden disabled:opacity-70 disabled:cursor-wait"
+          style={{
+            background: isSubmitting 
+              ? "rgba(20, 27, 45, 0.8)" 
+              : "linear-gradient(135deg, rgba(0, 242, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+            color: "#F1F5F9",
+          }}
+          onMouseEnter={(e) => {
+            if (!isSubmitting) {
+              e.currentTarget.style.background = "linear-gradient(135deg, rgba(0, 242, 255, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)";
+              e.currentTarget.style.borderColor = "rgba(0, 242, 255, 0.4)";
+              e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 242, 255, 0.15)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSubmitting) {
+              e.currentTarget.style.background = "linear-gradient(135deg, rgba(0, 242, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.2)";
+            }
+          }}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin text-foam" />
               Building Your Mosaic...
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5" />
+              <Sparkles className="w-5 h-5 text-foam" />
               Find My People
             </span>
           )}
@@ -371,6 +406,17 @@ export default function InterestInput({
           );
           border: 2px solid rgba(255, 255, 255, 0.15);
         }
+        
+        /* Vibrant CTA - Maximum standout */
+        .bg-cta-vibrant {
+          background: linear-gradient(135deg, #00F2FF 0%, #00D4E0 30%, #8B5CF6 70%, #A855F7 100%);
+          border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        .bg-cta-vibrant-hover {
+          background: linear-gradient(135deg, #3AF7FF 0%, #22D4E8 30%, #A78BFA 70%, #C084FC 100%);
+          border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+        
         .shadow-cta {
           box-shadow:
             0 0 20px rgba(0, 242, 255, 0.5),
@@ -384,6 +430,54 @@ export default function InterestInput({
             0 0 60px rgba(139, 92, 246, 0.5),
             0 12px 40px rgba(0, 0, 0, 0.5),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Intense glow for vibrant CTA */
+        .shadow-cta-glow {
+          box-shadow:
+            0 0 30px rgba(0, 242, 255, 0.7),
+            0 0 60px rgba(139, 92, 246, 0.5),
+            0 0 100px rgba(0, 242, 255, 0.3),
+            0 10px 40px rgba(0, 0, 0, 0.5),
+            inset 0 2px 0 rgba(255, 255, 255, 0.4);
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        .shadow-cta-glow:hover {
+          box-shadow:
+            0 0 40px rgba(0, 242, 255, 0.9),
+            0 0 80px rgba(139, 92, 246, 0.7),
+            0 0 120px rgba(0, 242, 255, 0.4),
+            0 15px 50px rgba(0, 0, 0, 0.6),
+            inset 0 2px 0 rgba(255, 255, 255, 0.5);
+          animation: none;
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow:
+              0 0 30px rgba(0, 242, 255, 0.7),
+              0 0 60px rgba(139, 92, 246, 0.5),
+              0 0 100px rgba(0, 242, 255, 0.3),
+              0 10px 40px rgba(0, 0, 0, 0.5),
+              inset 0 2px 0 rgba(255, 255, 255, 0.4);
+          }
+          50% {
+            box-shadow:
+              0 0 40px rgba(0, 242, 255, 0.85),
+              0 0 80px rgba(139, 92, 246, 0.65),
+              0 0 120px rgba(0, 242, 255, 0.4),
+              0 10px 40px rgba(0, 0, 0, 0.5),
+              inset 0 2px 0 rgba(255, 255, 255, 0.5);
+          }
+        }
+        
+        @keyframes rainbow-shift {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
         }
       `}</style>
     </div>

@@ -84,7 +84,14 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
 
     if (connected) {
         return (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
+            <div 
+              className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{
+                background: "rgba(34, 197, 94, 0.1)",
+                border: "1px solid rgba(34, 197, 94, 0.3)",
+                color: "#22C55E"
+              }}
+            >
                 <Check className="w-4 h-4" />
                 <span className="text-sm">{label} connected</span>
             </div>
@@ -96,14 +103,22 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
             type="button"
             onClick={handleConnect}
             disabled={loading}
-            className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg
-        bg-white/5 border border-glass-border
-        text-foreground/70 hover:text-foreground
-        hover:bg-white/10 hover:border-cyan/30
-        transition-all duration-200
-        disabled:opacity-50 disabled:cursor-wait
-      `}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-wait"
+            style={{
+              background: "rgba(20, 27, 45, 0.6)",
+              border: "1px solid #1E293B",
+              color: loading ? "#64748B" : "#F1F5F9",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = "rgba(0, 242, 255, 0.08)";
+                e.currentTarget.style.borderColor = "#00F2FF";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(20, 27, 45, 0.6)";
+              e.currentTarget.style.borderColor = "#1E293B";
+            }}
         >
             {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
