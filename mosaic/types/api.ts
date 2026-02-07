@@ -57,6 +57,7 @@ export interface MatchResult {
   ideological_distance?: number;
   composite_score?: number;
   distance_km?: number;
+  similarity_summary?: string; // Cached LLM-generated summary
 }
 
 export interface SearchResponse {

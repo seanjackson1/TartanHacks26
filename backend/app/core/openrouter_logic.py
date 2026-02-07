@@ -84,3 +84,46 @@ def generate_profile_summary(
     )
     content = response.choices[0].message.content or ""
     return content.strip()
+
+
+def generate_similarity_summary(dna_string_1: str, dna_string_2: str) -> str:
+    """Generate a 1-sentence summary of what two users have in common.
+    
+    Args:
+        dna_string_1: First user's profile DNA string
+        dna_string_2: Second user's profile DNA string
+    
+    Returns:
+        A short sentence describing shared interests/traits
+    """
+    if not dna_string_1 or not dna_string_2:
+        return "You both share similar interests."
+    
+    client = _client()
+    system = (
+        "You are a helpful assistant. Given two user profiles, write a short, friendly sentence "
+        "describing what they have in common. Be specific about their shared interests or traits. "
+        "Examples: 'You both enjoy competitive gaming and following tech YouTubers.' or "
+        "'You both are into fitness and share a love for indie music.' "
+        "Start with 'You both' and keep it conversational."
+    )
+    
+    response = client.chat.completions.create(
+        model=TEXT_MODEL,
+        temperature=0.4,
+        max_tokens=80,
+        messages=[
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": (
+                    f"User 1: {dna_string_1}\n\n"
+                    f"User 2: {dna_string_2}\n\n"
+                    "What do they have in common?"
+                ),
+            },
+        ],
+    )
+    content = response.choices[0].message.content or ""
+    return content.strip()
+

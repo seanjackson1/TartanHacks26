@@ -8,6 +8,7 @@ from app.routes import (
     messaging_router,
     profile_router,
     search_router,
+    similarity_router,
     youtube_router,
 )
 
@@ -27,6 +28,7 @@ app.include_router(ingest_router)
 app.include_router(messaging_router)
 app.include_router(profile_router)
 app.include_router(search_router)
+app.include_router(similarity_router)
 app.include_router(youtube_router)
 
 
