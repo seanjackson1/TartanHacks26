@@ -27,6 +27,7 @@ async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
   });
   if (!res.ok) {
     const err = await res.text();
+    console.error(`API Error details for ${path}:`, err, res.status);
     throw new Error(`API ${path} failed (${res.status}): ${err}`);
   }
   return res.json();

@@ -46,7 +46,9 @@ def upsert_oauth_account(
     }
     url = f"{_rest_base()}/{OAUTH_TABLE}"
     params = {"on_conflict": "user_id,provider"}
-    headers = _headers() | {"Prefer": "resolution=merge-duplicates,return=representation"}
+    headers = _headers() | {
+        "Prefer": "resolution=merge-duplicates,return=representation"
+    }
     resp = requests.post(url, params=params, json=payload, headers=headers, timeout=10)
     resp.raise_for_status()
     data = resp.json()
@@ -60,9 +62,7 @@ def get_oauth_account(user_id: str, provider: str) -> Optional[dict[str, Any]]:
         "provider": f"eq.{provider}",
         "limit": 1,
     }
-    resp = requests.get(
-        url + "?" + urlencode(query), headers=_headers(), timeout=10
-    )
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
     resp.raise_for_status()
     data = resp.json()
     return data[0] if isinstance(data, list) and data else None
@@ -96,8 +96,10 @@ def upsert_profile(
     if user_id:
         payload["id"] = user_id
     url = f"{_rest_base()}/{PROFILES_TABLE}"
-    params = {"on_conflict": "username"}
-    headers = _headers() | {"Prefer": "resolution=merge-duplicates,return=representation"}
+    params = {"on_conflict": "id" if user_id else "username"}
+    headers = _headers() | {
+        "Prefer": "resolution=merge-duplicates,return=representation"
+    }
     resp = requests.post(url, params=params, json=payload, headers=headers, timeout=20)
     resp.raise_for_status()
     data = resp.json()
