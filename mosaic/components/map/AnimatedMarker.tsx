@@ -32,11 +32,11 @@ export default function AnimatedMarker({ user, delay, score, onClick }: Props) {
     return null;
 
   // Determine glow intensity based on score
-  // Only show glow for 75%+ matches, scale exponentially
-  const showGlow = score >= 0.75;
-  const glowIntensity = showGlow ? Math.pow((score - 0.75) / 0.25, 2) : 0; // Exponential scaling 0-1
-  const glowSize = 4 + glowIntensity * 16; // 4px to 20px glow
-  const glowOpacity = 0.3 + glowIntensity * 0.5; // 0.3 to 0.8
+  // Show glow for 70%+ matches, linear scaling so 80%+ is relatively strong
+  const showGlow = score >= 0.7;
+  const glowIntensity = showGlow ? (score - 0.7) / 0.3 : 0; // Linear scaling 0-1 for 70-100%
+  const glowSize = 6 + glowIntensity * 14; // 6px to 20px glow
+  const glowOpacity = 0.5 + glowIntensity * 0.4; // 0.5 to 0.9
 
   // Slightly reduced opacity for low matches
   const dotOpacity = score < 0.25 ? 0.6 : 1;
