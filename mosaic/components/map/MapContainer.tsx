@@ -14,6 +14,8 @@ import type { User } from "@/types/api";
 import type { MatchResult } from "@/types/api";
 import AnimatedMarker from "./AnimatedMarker";
 
+import { latLngBounds } from "leaflet";
+
 function FlyToHandler() {
   const map = useMap();
   const selectedMatch = useAppStore((s) => s.selectedMatch);
@@ -26,11 +28,33 @@ function FlyToHandler() {
     ) {
       map.flyTo(
         [selectedMatch.user.latitude, selectedMatch.user.longitude],
-        15,
+        15, // Reduced zoom level from 15
         { duration: 1.5 }
       );
     }
   }, [selectedMatch, map]);
+
+  return null;
+}
+
+function FitBoundsHandler({ markers }: { markers: User[] }) {
+  const map = useMap();
+  const matches = useAppStore((s) => s.matches);
+
+  useEffect(() => {
+    if (matches.length > 0 && markers.length > 0) {
+      const validMarkers = markers.filter(
+        (m) => Number.isFinite(m.latitude) && Number.isFinite(m.longitude)
+      );
+
+      if (validMarkers.length > 0) {
+        const bounds = latLngBounds(
+          validMarkers.map((m) => [m.latitude, m.longitude])
+        );
+        map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+      }
+    }
+  }, [matches, markers, map]);
 
   return null;
 }
@@ -66,6 +90,7 @@ export default function MosaicMap({ markers }: { markers: User[] }) {
       >
         <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} noWrap={true} />
         <FlyToHandler />
+        <FitBoundsHandler markers={markers} />
         {markers
           .filter(
             (u) =>
