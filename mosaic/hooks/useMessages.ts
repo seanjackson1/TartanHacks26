@@ -26,11 +26,22 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Use refs to always have current values in WebSocket callbacks
+    const recipientIdRef = useRef(recipientId);
+    const userIdRef = useRef(userId);
+
+    // Keep refs in sync with props
+    useEffect(() => {
+        recipientIdRef.current = recipientId;
+    }, [recipientId]);
+
+    useEffect(() => {
+        userIdRef.current = userId;
+    }, [userId]);
+
     // Load message history
     useEffect(() => {
         if (!userId || !recipientId) return;
-
-        console.log("[DEBUG] loadHistory effect running", { userId, recipientId });
 
         const loadHistory = async () => {
             setIsLoading(true);
@@ -40,7 +51,6 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                 );
                 if (res.ok) {
                     const data = await res.json();
-                    console.log("[DEBUG] loadHistory overwriting messages with", data.length, "messages from DB");
                     setMessages(data);
                 }
             } catch (err) {
@@ -53,7 +63,8 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
         loadHistory();
     }, [userId, recipientId]);
 
-    // WebSocket connection
+    // WebSocket connection - only depends on userId, not recipientId
+    // This prevents reconnection when switching conversations
     useEffect(() => {
         if (!userId) return;
 
@@ -69,45 +80,30 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    console.log("[DEBUG] WS onmessage received:", data);
-                    console.log("[DEBUG] Current recipientId in closure:", recipientId);
-
                     if (data.type === "new_message" && data.message) {
                         const msg = data.message as Message;
 
-                        const isPartOfConversation =
-                            (msg.sender_id === userId && msg.receiver_id === recipientId) ||
-                            (msg.sender_id === recipientId && msg.receiver_id === userId);
+                        // Read current values from refs (not stale closure values)
+                        const currentRecipientId = recipientIdRef.current;
+                        const currentUserId = userIdRef.current;
 
-                        console.log("[DEBUG] Filter check:", {
-                            msgSenderId: msg.sender_id,
-                            msgReceiverId: msg.receiver_id,
-                            userId,
-                            recipientId,
-                            isPartOfConversation
-                        });
+                        const isPartOfConversation =
+                            (msg.sender_id === currentUserId && msg.receiver_id === currentRecipientId) ||
+                            (msg.sender_id === currentRecipientId && msg.receiver_id === currentUserId);
 
                         // Only add if it's part of this conversation
                         if (isPartOfConversation) {
                             setMessages((prev) => {
-                                console.log("[DEBUG] setMessages called, prev has", prev.length, "messages");
-                                console.log("[DEBUG] prev message IDs:", prev.map(m => m.id));
-
                                 // Check if we already have this message (by real ID)
-                                if (prev.some((m) => m.id === msg.id)) {
-                                    console.log("[DEBUG] Message already exists, skipping");
-                                    return prev;
-                                }
+                                if (prev.some((m) => m.id === msg.id)) return prev;
 
                                 // If this is our own message, replace the optimistic one
-                                if (msg.sender_id === userId) {
+                                if (msg.sender_id === currentUserId) {
                                     // Find and replace optimistic message with same content
                                     const optimisticIdx = prev.findIndex(
                                         (m) => m.id.startsWith("temp-") && m.content === msg.content
                                     );
-                                    console.log("[DEBUG] Looking for optimistic msg, found at idx:", optimisticIdx);
                                     if (optimisticIdx !== -1) {
-                                        console.log("[DEBUG] Replacing optimistic message at index", optimisticIdx);
                                         const updated = [...prev];
                                         updated[optimisticIdx] = msg;
                                         return updated;
@@ -115,11 +111,8 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                                 }
 
                                 // Otherwise just add the new message
-                                console.log("[DEBUG] Adding new message to end");
                                 return [...prev, msg];
                             });
-                        } else {
-                            console.log("[DEBUG] Message filtered out - not part of current conversation");
                         }
                     }
                 } catch (err) {
@@ -151,7 +144,7 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                 wsRef.current.close();
             }
         };
-    }, [userId, recipientId]);
+    }, [userId]); // Only reconnect when userId changes, not recipientId
 
     const sendMessage = useCallback(
         (content: string) => {
@@ -168,11 +161,7 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                 content,
                 created_at: new Date().toISOString(),
             };
-            console.log("[DEBUG] sendMessage: Adding optimistic message", optimisticMessage.id);
-            setMessages((prev) => {
-                console.log("[DEBUG] sendMessage: prev had", prev.length, "messages, adding optimistic");
-                return [...prev, optimisticMessage];
-            });
+            setMessages((prev) => [...prev, optimisticMessage]);
 
             wsRef.current.send(
                 JSON.stringify({
@@ -181,7 +170,6 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                     content,
                 })
             );
-            console.log("[DEBUG] sendMessage: Sent to WebSocket");
         },
         [recipientId, userId]
     );
