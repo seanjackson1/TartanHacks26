@@ -8,9 +8,16 @@ import MessageBubble from "./MessageBubble";
 import { Send, X, Loader2 } from "lucide-react";
 
 export default function ChatPanel() {
-    const { currentUser, chatRecipientId, setChatRecipientId, selectedMatch } = useAppStore();
+    const { currentUser, chatRecipientId, setChatRecipientId, selectedMatch, setSelectedMatch } = useAppStore();
     const [inputValue, setInputValue] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // On mobile, close profile card when chat opens (to avoid stacking issues)
+    useEffect(() => {
+        if (chatRecipientId && selectedMatch && window.innerWidth < 768) {
+            setSelectedMatch(null);
+        }
+    }, [chatRecipientId, selectedMatch, setSelectedMatch]);
 
     const { messages, sendMessage, isConnected, isLoading } = useMessages({
         userId: currentUser?.id || "",
@@ -46,7 +53,7 @@ export default function ChatPanel() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -320, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 glass flex flex-col overflow-hidden md:top-4 md:right-[340px] md:bottom-4 md:w-80 md:rounded-xl"
+            className="fixed inset-0 z-[70] glass flex flex-col overflow-hidden md:top-4 md:right-[340px] md:bottom-4 md:left-auto md:w-80 md:rounded-xl"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-glass-border">
