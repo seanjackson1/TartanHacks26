@@ -63,8 +63,13 @@ export default function MosaicMap({ markers }: { markers: User[] }) {
       >
         <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
         <FlyToHandler />
-        {markers.map((user, i) => (
-          <AnimatedMarker
+        {markers
+          .filter(
+            (u) =>
+              Number.isFinite(u.latitude) && Number.isFinite(u.longitude)
+          )
+          .map((user, i) => (
+            <AnimatedMarker
             key={user.id}
             user={user}
             delay={i * 50}

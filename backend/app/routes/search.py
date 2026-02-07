@@ -63,7 +63,10 @@ def search(
             distance_km = m["distance_meters"] / 1000
 
         ideological_distance = None
-        if user.get("ideology_score") is not None and profile.get("ideology_score") is not None:
+        if (
+            user.get("ideology_score") is not None
+            and profile.get("ideology_score") is not None
+        ):
             ideological_distance = abs(
                 user["ideology_score"] - profile["ideology_score"]
             )
@@ -75,6 +78,16 @@ def search(
                     username=user["username"],
                     bio=user.get("bio"),
                     ideology_score=user.get("ideology_score"),
+                    latitude=(
+                        float(user["location"].split("(")[1].split(" ")[1].rstrip(")"))
+                        if user.get("location") and "POINT" in user["location"]
+                        else None
+                    ),
+                    longitude=(
+                        float(user["location"].split("(")[1].split(" ")[0])
+                        if user.get("location") and "POINT" in user["location"]
+                        else None
+                    ),
                     instagram_handle=user.get("instagram_handle"),
                     marker_color=user.get("marker_color"),
                     metadata=user.get("metadata"),
