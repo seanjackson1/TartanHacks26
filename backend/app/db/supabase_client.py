@@ -2,23 +2,25 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Optional
+from urllib.parse import urlencode
 
-from supabase import Client, create_client
+import requests
 
 from app.config import settings
-
-_supabase: Optional[Client] = None
 
 OAUTH_TABLE = "oauth_accounts"
 
 
-def get_supabase() -> Client:
-    global _supabase
-    if _supabase is None:
-        _supabase = create_client(
-            settings.supabase_url, settings.supabase_service_role_key
-        )
-    return _supabase
+def _rest_base() -> str:
+    return settings.supabase_url.rstrip("/") + "/rest/v1"
+
+
+def _headers() -> dict[str, str]:
+    return {
+        "apikey": settings.supabase_service_role_key,
+        "Authorization": f"Bearer {settings.supabase_service_role_key}",
+        "Content-Type": "application/json",
+    }
 
 
 def upsert_oauth_account(
@@ -31,7 +33,6 @@ def upsert_oauth_account(
     expires_at: Optional[datetime],
     raw_token: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    sb = get_supabase()
     payload: dict[str, Any] = {
         "user_id": user_id,
         "provider": provider,
@@ -42,22 +43,25 @@ def upsert_oauth_account(
         "raw_token": raw_token,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    result = (
-        sb.table(OAUTH_TABLE)
-        .upsert(payload, on_conflict="user_id,provider")
-        .execute()
-    )
-    return result.data[0] if result.data else payload
+    url = f"{_rest_base()}/{OAUTH_TABLE}"
+    params = {"on_conflict": "user_id,provider"}
+    headers = _headers() | {"Prefer": "resolution=merge-duplicates,return=representation"}
+    resp = requests.post(url, params=params, json=payload, headers=headers, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else payload
 
 
 def get_oauth_account(user_id: str, provider: str) -> Optional[dict[str, Any]]:
-    sb = get_supabase()
-    result = (
-        sb.table(OAUTH_TABLE)
-        .select("*")
-        .eq("user_id", user_id)
-        .eq("provider", provider)
-        .limit(1)
-        .execute()
+    url = f"{_rest_base()}/{OAUTH_TABLE}"
+    query = {
+        "user_id": f"eq.{user_id}",
+        "provider": f"eq.{provider}",
+        "limit": 1,
+    }
+    resp = requests.get(
+        url + "?" + urlencode(query), headers=_headers(), timeout=10
     )
-    return result.data[0] if result.data else None
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else None

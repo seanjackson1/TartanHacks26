@@ -8,8 +8,7 @@ python-dotenv>=1.0.0
 # OpenRouter (uses OpenAI SDK with custom base_url)
 openai>=1.10.0
 
-# Supabase
-supabase>=2.3.0
+# Supabase (REST API via requests)
 
 # OAuth
 authlib>=1.2.0

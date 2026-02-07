@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     steam_api_key: str = ""
 
     # OAuth settings
-    oauth_redirect_base_url: str = "http://localhost:8000"
+    oauth_redirect_base_url: str = "http://localhost:8001"
     oauth_state_secret: str = "change-me"
 
     # App settings
