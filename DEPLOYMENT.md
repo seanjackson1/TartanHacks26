@@ -30,8 +30,8 @@ Render will detect the `render.yaml` file (Blueprint) if you choose "Blueprints"
 
 You **MUST** set these environment variables in the Render Dashboard under the "Environment" tab for your service:
 
-*   `SUPABASE_URL`: Your Supabase URL.
-*   `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role Key (starts with `ey...`).
+*   `SUPABASE_URL`: Found in Supabase Dashboard -> Project Settings -> API -> Project URL.
+*   `SUPABASE_SERVICE_ROLE_KEY`: Found in Supabase Dashboard -> Project Settings -> API -> `service_role` (secret) key. **Do not use the `anon` public key.**
 *   `OPENROUTER_API_KEY`: Your OpenRouter API Key.
 
 ### 4. Deploy
