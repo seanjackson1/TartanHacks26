@@ -39,16 +39,16 @@ def ingest(
     try:
         user_id = str(current_user.get("id"))
         print(f"DEBUG: ingest user_id={user_id!r}")
-        
+
         # Get user-provided interests
         interests = [i.strip() for i in request.interests if i.strip()]
-        
+
         # Fetch and merge YouTube interests (if OAuth connected)
         youtube_interests = fetch_youtube_interests(user_id=user_id)
         if youtube_interests:
             print(f"DEBUG: Found {len(youtube_interests)} YouTube interests")
             interests = interests + youtube_interests
-        
+
         # Fetch and merge Steam interests (if OAuth connected)
         steam_account = get_oauth_account(user_id, "steam")
         if steam_account and steam_account.get("provider_user_id"):
@@ -57,7 +57,7 @@ def ingest(
             if steam_interests:
                 print(f"DEBUG: Found {len(steam_interests)} Steam interests")
                 interests = interests + steam_interests
-        
+
         if not interests:
             raise HTTPException(
                 status_code=400, detail="Interests list cannot be empty."
@@ -73,11 +73,17 @@ def ingest(
         embedding = get_embedding(dna_string)
         cluster = _choose_cluster(interests)
         marker_color = CLUSTER_COLORS[cluster]
+
+        # Get avatar URL from auth user metadata
+        user_metadata = current_user.get("user_metadata", {})
+        avatar_url = user_metadata.get("avatar_url") or user_metadata.get("picture")
+
         metadata = {
-            "interests": interests[:5],
+            "top_interests": interests[:5],
             "youtube_username": request.youtube_username,
             "steam_id": request.steam_id,
             "github_username": request.github_username,
+            "avatar_url": avatar_url,
         }
 
         location_wkt = f"SRID=4326;POINT({request.longitude} {request.latitude})"
