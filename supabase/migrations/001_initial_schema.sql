@@ -1,5 +1,6 @@
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
@@ -8,12 +9,12 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 -- Using 1024-dimension vectors for intfloat/e5-large-v2 via OpenRouter
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid() REFERENCES auth.users(id) ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
     bio TEXT,
     ideology_score INT CHECK (ideology_score >= 1 AND ideology_score <= 10),
     location GEOGRAPHY(Point, 4326),
-    discord_handle TEXT,
+    instagram_handle TEXT,
     embedding VECTOR(1024),  -- intfloat/e5-large-v2 via OpenRouter
     marker_color VARCHAR(7),
     metadata JSONB,
@@ -32,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_embedding ON profiles USING hnsw(embeddi
 -- Table: interests
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS interests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     source TEXT NOT NULL CHECK (source IN ('spotify', 'steam', 'manual_beli', 'manual_hevy')),
     raw_text TEXT NOT NULL,
