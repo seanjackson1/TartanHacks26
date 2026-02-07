@@ -30,6 +30,8 @@ export default function AnimatedMarker({ user, delay, onClick }: Props) {
   }, [delay]);
 
   if (!visible) return null;
+  if (!Number.isFinite(user.latitude) || !Number.isFinite(user.longitude))
+    return null;
 
   return (
     <CircleMarker

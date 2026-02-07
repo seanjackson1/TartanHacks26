@@ -19,7 +19,11 @@ function FlyToHandler() {
   const selectedMatch = useAppStore((s) => s.selectedMatch);
 
   useEffect(() => {
-    if (selectedMatch) {
+    if (
+      selectedMatch &&
+      Number.isFinite(selectedMatch.user.latitude) &&
+      Number.isFinite(selectedMatch.user.longitude)
+    ) {
       map.flyTo(
         [selectedMatch.user.latitude, selectedMatch.user.longitude],
         15,
