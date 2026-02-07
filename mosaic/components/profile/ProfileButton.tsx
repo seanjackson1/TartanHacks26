@@ -95,26 +95,28 @@ export default function ProfileButton() {
   return (
     <div ref={menuRef} className="fixed top-4 left-4 z-[1000]">
       {/* Profile Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
-      >
-        {currentUser.avatar_url ? (
-          <img
-            src={currentUser.avatar_url}
-            alt={currentUser.username}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
-            <User className="w-6 h-6 text-white" />
-          </div>
-        )}
-        {/* Online indicator */}
-        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full" />
-      </motion.button>
+      <div className="relative">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
+        >
+          {currentUser.avatar_url ? (
+            <img
+              src={currentUser.avatar_url}
+              alt={currentUser.username}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
+              <User className="w-6 h-6 text-white" />
+            </div>
+          )}
+        </motion.button>
+        {/* Online indicator - outside button to avoid clipping */}
+        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full pointer-events-none" />
+      </div>
 
       {/* Dropdown Menu */}
       <AnimatePresence>
