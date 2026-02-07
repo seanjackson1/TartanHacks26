@@ -72,7 +72,7 @@ export default function ControlPanel() {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3, type: "spring", damping: 25 }}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 glass px-6 py-4 flex items-center gap-4"
+      className="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-40 glass px-4 py-3 md:px-6 md:py-4 flex items-center gap-2 md:gap-4"
     >
       {/* Search Button - always visible */}
       <button

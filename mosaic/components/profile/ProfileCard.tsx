@@ -61,7 +61,7 @@ export default function ProfileCard() {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="fixed top-4 right-4 bottom-4 w-80 z-50 glass p-6 flex flex-col gap-4 overflow-y-auto"
+          className="fixed inset-0 z-[60] glass p-6 pt-20 flex flex-col gap-4 overflow-y-auto md:top-4 md:right-4 md:bottom-4 md:left-auto md:w-80 md:pt-6 md:rounded-xl text-left"
         >
           {/* Close button */}
           <button
@@ -146,14 +146,14 @@ export default function ProfileCard() {
           </div>
 
           {/* Interests */}
-          {Array.isArray(selectedMatch.user.metadata?.top_interests) && (
+          {(Array.isArray(selectedMatch.user.metadata?.all_interests) || Array.isArray(selectedMatch.user.metadata?.top_interests)) && (
             <div>
               <span className="text-xs uppercase tracking-wider text-foreground/50">
                 Interests
               </span>
-              <div className="flex flex-wrap gap-2 mt-2">
+              {/* <div className="flex flex-wrap gap-2 mt-2">
                 {(
-                  selectedMatch.user.metadata!.top_interests as string[]
+                  (selectedMatch.user.metadata?.top_interests || selectedMatch.user.metadata?.all_interests || []) as string[]
                 ).map((interest: string, i: number) => (
                   <span
                     key={i}
@@ -162,7 +162,7 @@ export default function ProfileCard() {
                     {interest}
                   </span>
                 ))}
-              </div>
+              </div> */}
             </div>
           )}
 

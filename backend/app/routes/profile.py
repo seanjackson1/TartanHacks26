@@ -75,6 +75,17 @@ def _parse_location(location: str | dict | None) -> tuple[float, float] | None:
     return None
 
 
+@router.get("/profile/connections", response_model=ConnectionsResponse)
+def get_connections(
+    current_user: dict = Depends(get_current_user),
+) -> ConnectionsResponse:
+    """Get list of connected and available OAuth providers."""
+    user_id = str(current_user.get("id"))
+    connected = get_connected_providers(user_id)
+    available = [p for p in ALL_PROVIDERS if p not in connected]
+    return ConnectionsResponse(connected=connected, available=available)
+
+
 @router.get("/profile/{user_id}", response_model=User | None)
 def get_public_profile(
     user_id: str, current_user: dict = Depends(get_current_user)
@@ -171,17 +182,6 @@ def patch_profile(
         metadata=updated.get("metadata"),
         dna_string=updated.get("dna_string"),
     )
-
-
-@router.get("/profile/connections", response_model=ConnectionsResponse)
-def get_connections(
-    current_user: dict = Depends(get_current_user),
-) -> ConnectionsResponse:
-    """Get list of connected and available OAuth providers."""
-    user_id = str(current_user.get("id"))
-    connected = get_connected_providers(user_id)
-    available = [p for p in ALL_PROVIDERS if p not in connected]
-    return ConnectionsResponse(connected=connected, available=available)
 
 
 class RefreshResponse(BaseModel):

@@ -140,7 +140,7 @@ export default function MessagingCenter() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed top-[7.5rem] left-4 w-80 max-h-[70vh] z-[999] bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden flex flex-col"
+          className="fixed inset-0 z-[999] bg-gray-900/95 backdrop-blur-xl md:border border-white/10 md:rounded-2xl shadow-2xl shadow-black/50 overflow-hidden flex flex-col md:top-30 md:left-4 md:w-80 md:h-auto md:max-h-[70vh] w-full h-full"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 to-purple-600/10">

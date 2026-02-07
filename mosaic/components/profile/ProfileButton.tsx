@@ -294,7 +294,7 @@ export default function ProfileButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute top-[6.5rem] left-0 w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
+            className="fixed inset-0 z-[1001] w-full h-full md:absolute md:inset-auto md:top-28 md:left-0 md:w-72 md:h-auto md:rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden flex flex-col md:block"
           >
             {/* Header with avatar */}
             <div className="relative p-4 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border-b border-white/10">
