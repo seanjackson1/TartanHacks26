@@ -110,9 +110,9 @@ export default function ProfileCard() {
           )}
 
           {/* Discord CTA */}
-          {selectedMatch.user.discord_handle && (
+          {selectedMatch.user.instagram_handle && (
             <button className="mt-auto w-full py-3 rounded-lg bg-[#5865F2] text-white font-semibold hover:bg-[#4752C4] transition-colors">
-              Connect: {selectedMatch.user.discord_handle}
+              Connect: {selectedMatch.user.instagram_handle}
             </button>
           )}
         </motion.div>
