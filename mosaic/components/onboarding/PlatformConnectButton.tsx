@@ -36,8 +36,9 @@ export default function PlatformConnectButton({ provider, label, icon }: Props) 
                              (window.innerWidth <= 768);
 
             if (isMobile) {
-                // On mobile, navigate directly instead of using popup
-                window.location.href = authUrl;
+                // On mobile, open in a new tab instead of popup
+                window.open(authUrl, '_blank');
+                setLoading(false);
                 return;
             }
 
