@@ -101,11 +101,12 @@ def generate_similarity_summary(dna_string_1: str, dna_string_2: str) -> str:
     
     client = _client()
     system = (
-        "You are a helpful assistant. Given two user profiles, write a short, friendly sentence "
-        "describing what they have in common. Be specific about their shared interests or traits. "
-        "Examples: 'You both enjoy competitive gaming and following tech YouTubers.' or "
-        "'You both are into fitness and share a love for indie music.' "
-        "Start with 'You both' and keep it conversational."
+        "You are a helpful assistant. Given two user profiles, write a short sentence "
+        "describing what they SPECIFICALLY have in common. You MUST name 2-3 actual shared "
+        "interests, games, channels, or hobbies from their profiles. Do NOT be generic or vague. "
+        "Bad: 'You both enjoy gaming and YouTube content.' "
+        "Good: 'You both are into Counter-Strike, watch MrBeast, and enjoy hiking.' "
+        "Start with 'You both' and keep it under 20 words."
     )
     
     response = client.chat.completions.create(

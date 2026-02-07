@@ -41,9 +41,14 @@ def get_similarity_summary(
     current_dna = current_profile.get("dna_string") or ""
     other_dna = other_profile.get("dna_string") or ""
     
+    print(f"DEBUG similarity: current_dna length={len(current_dna)}, other_dna length={len(other_dna)}")
+    print(f"DEBUG similarity: current_dna preview={current_dna[:100] if current_dna else 'EMPTY'}")
+    print(f"DEBUG similarity: other_dna preview={other_dna[:100] if other_dna else 'EMPTY'}")
+    
     # Generate similarity summary using LLM
     try:
         summary = generate_similarity_summary(current_dna, other_dna)
+        print(f"DEBUG similarity: generated summary={summary}")
     except Exception as exc:
         print(f"DEBUG: similarity summary generation failed: {exc}")
         summary = "You both share similar interests."
