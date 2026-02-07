@@ -102,7 +102,7 @@ export default function ProfileCard() {
               </span>
               <div className="flex flex-wrap gap-2 mt-2">
                 {(
-                  (selectedMatch.user.metadata?.all_interests || selectedMatch.user.metadata?.top_interests) as string[]
+                  (selectedMatch.user.metadata?.top_interests) as string[]
                 ).map((interest: string, i: number) => (
                   <span
                     key={i}
