@@ -19,6 +19,17 @@ export default function OnboardingOverlay() {
   const [step, setStep] = useState<OnboardingStep>("auth");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // DEBUG LOGS
+  useEffect(() => {
+    console.log("[OnboardingOverlay] Mounted");
+    console.log("[OnboardingOverlay] State:", { isOnboarding, step, checkingAuth });
+    return () => console.log("[OnboardingOverlay] Unmounted");
+  }, []);
+
+  useEffect(() => {
+    console.log("[OnboardingOverlay] State Update:", { isOnboarding, step, checkingAuth });
+  }, [isOnboarding, step, checkingAuth]);
+
   // Check session on mount and fetch existing profile
   useEffect(() => {
     let mounted = true;
