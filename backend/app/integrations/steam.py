@@ -87,3 +87,10 @@ async def fetch_steam_interests(steam_id: str) -> list[str]:
     interests.extend([f"Recently played: {g}" for g in recent])
     interests.extend([f"Top owned: {g}" for g in top_owned])
     return interests
+
+
+def fetch_steam_interests_sync(steam_id: str) -> list[str]:
+    """Synchronous wrapper for use in sync endpoints like /ingest."""
+    import asyncio
+
+    return asyncio.run(fetch_steam_interests(steam_id))

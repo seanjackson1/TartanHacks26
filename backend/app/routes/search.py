@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import struct
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.supabase_auth import get_current_user
@@ -14,6 +16,39 @@ from app.db.supabase_client import (
 from app.models.schemas import MatchResult, Mode, SearchRequest, SearchResponse, User
 
 router = APIRouter()
+
+
+def _parse_location(location: str | None) -> tuple[float, float] | None:
+    """
+    Parse PostGIS EWKB hex string to (latitude, longitude) tuple.
+    PostGIS returns geography as EWKB hex like: 0101000020E6100000...
+    Format: endian(1) + type_with_srid(4) + srid(4) + lon(8) + lat(8)
+    """
+    if not location:
+        return None
+    
+    # Check if it's WKT format (legacy fallback)
+    if "POINT" in location:
+        try:
+            # POINT(-79.94 40.44) or SRID=4326;POINT(-79.94 40.44)
+            inner = location.split("(")[1].split(")")[0]
+            parts = inner.strip().split()
+            lon, lat = float(parts[0]), float(parts[1])
+            return (lat, lon)
+        except (IndexError, ValueError):
+            return None
+    
+    # Parse EWKB hex format
+    try:
+        wkb = bytes.fromhex(location)
+        if len(wkb) < 25:
+            return None
+        # EWKB Point with SRID: byte 9 = lon, byte 17 = lat (little-endian doubles)
+        lon = struct.unpack_from('<d', wkb, 9)[0]
+        lat = struct.unpack_from('<d', wkb, 17)[0]
+        return (lat, lon)
+    except (ValueError, struct.error):
+        return None
 
 
 @router.post("/search", response_model=SearchResponse)
@@ -71,6 +106,11 @@ def search(
                 user["ideology_score"] - profile["ideology_score"]
             )
 
+        # Parse location once
+        parsed_loc = _parse_location(user.get("location"))
+        lat = parsed_loc[0] if parsed_loc else None
+        lon = parsed_loc[1] if parsed_loc else None
+
         results.append(
             MatchResult(
                 user=User(
@@ -78,16 +118,8 @@ def search(
                     username=user["username"],
                     bio=user.get("bio"),
                     ideology_score=user.get("ideology_score"),
-                    latitude=(
-                        float(user["location"].split("(")[1].split(" ")[1].rstrip(")"))
-                        if user.get("location") and "POINT" in user["location"]
-                        else None
-                    ),
-                    longitude=(
-                        float(user["location"].split("(")[1].split(" ")[0])
-                        if user.get("location") and "POINT" in user["location"]
-                        else None
-                    ),
+                    latitude=lat,
+                    longitude=lon,
                     instagram_handle=user.get("instagram_handle"),
                     marker_color=user.get("marker_color"),
                     metadata=user.get("metadata"),

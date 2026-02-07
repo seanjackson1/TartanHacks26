@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.openrouter_logic import get_embedding
 from app.core.supabase_auth import get_current_user
-from app.db.supabase_client import upsert_profile
+from app.db.supabase_client import get_oauth_account, upsert_profile
+from app.integrations.steam import fetch_steam_interests_sync
 from app.integrations.youtube import fetch_youtube_interests
 from app.models.schemas import (
     CLUSTER_COLORS,
@@ -47,6 +48,15 @@ def ingest(
         if youtube_interests:
             print(f"DEBUG: Found {len(youtube_interests)} YouTube interests")
             interests = interests + youtube_interests
+        
+        # Fetch and merge Steam interests (if OAuth connected)
+        steam_account = get_oauth_account(user_id, "steam")
+        if steam_account and steam_account.get("provider_user_id"):
+            steam_id = steam_account["provider_user_id"]
+            steam_interests = fetch_steam_interests_sync(steam_id)
+            if steam_interests:
+                print(f"DEBUG: Found {len(steam_interests)} Steam interests")
+                interests = interests + steam_interests
         
         if not interests:
             raise HTTPException(
