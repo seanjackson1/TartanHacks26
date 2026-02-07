@@ -21,3 +21,6 @@
 ## Notes
 - `/search` now derives the user ID from the Supabase JWT (no `user_id` in request body).
 - `/ingest` requires `Authorization: Bearer <token>` and will use the token's user ID.
+ - Added test helpers: `backend/scripts/test_api.py` and `backend/requests.http`.
+ - Added REST Client env templates: `.rest-client.env.json` and `backend/.http.env.json`.
+ - Added `SUPABASE_ANON_KEY` to backend config/env to validate JWTs.
