@@ -89,6 +89,10 @@ def search(
 
     results: list[MatchResult] = []
     for m in matches:
+        # Skip the current user
+        if m["user_id"] == user_id:
+            continue
+
         user = profile_map.get(m["user_id"])
         if not user:
             continue
