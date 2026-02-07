@@ -61,6 +61,7 @@ def ingest(
         location_wkt = f"SRID=4326;POINT({request.longitude} {request.latitude})"
 
         user_id = str(current_user.get("id"))
+        print(f"DEBUG: ingest user_id={user_id!r}")
         if request.user_id and str(request.user_id) != user_id:
             raise HTTPException(status_code=403, detail="User ID mismatch.")
 
