@@ -105,19 +105,21 @@ def generate_similarity_summary(interests_1: list[str], interests_2: list[str]) 
     
     client = _client()
     system = (
-        "You are a helpful assistant. Given two users' interest lists, write a short sentence "
-        "describing what they SPECIFICALLY have in common. You MUST name 2-3 actual shared "
-        "interests, games, channels, servers, or hobbies that appear in BOTH lists. "
-        "You MUST use the interest lists as evidence for your claims of similar items. "
-        "Do NOT be generic or vague. Look for exact matches or very similar items. "
-        "Good: 'You both play Terraria, are in CMU Esports, and watch FitnessFAQs.' "
-        "Start with 'You both' and keep it under 20 words."
+        "You are a helpful assistant comparing two users' interests. Write a friendly, medium-length "
+        "sentence (20-35 words) about what they have in common. "
+        "PRIORITY ORDER for matches: "
+        "1) Same games (e.g. both have 'Terraria' or 'Counter-Strike') - great conversation starters! "
+        "2) Same Discord servers (e.g. both in 'CMU Esports') - they might already know each other! "
+        "3) Same YouTube channels/subscriptions (e.g. both watch 'FitnessFAQs') "
+        "4) Same hobbies (e.g. both like 'hiking' or 'calisthenics') "
+        "Name 2-4 SPECIFIC shared items from their lists. Do NOT be generic. "
+        "Start with 'You both' and mention why these matches could spark a connection."
     )
     
     response = client.chat.completions.create(
         model=TEXT_MODEL,
-        temperature=0.3,
-        max_tokens=60,
+        temperature=0.4,
+        max_tokens=100,
         messages=[
             {"role": "system", "content": system},
             {
