@@ -8,8 +8,11 @@ python-dotenv>=1.0.0
 # OpenRouter (uses OpenAI SDK with custom base_url)
 openai>=1.10.0
 
-# Supabase
-supabase>=2.3.0
+# Supabase (REST API via requests)
+
+# OAuth
+authlib>=1.2.0
+requests>=2.31.0
 
 # Spotify Integration
 spotipy>=2.23.0
@@ -17,3 +20,6 @@ spotipy>=2.23.0
 # Utilities
 httpx>=0.26.0
 numpy>=1.26.0
+
+# Production Server
+gunicorn>=21.2.0

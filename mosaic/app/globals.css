@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a12;
+  --foreground: #e0e0e0;
+  --cyan: #00f2ff;
+  --magenta: #ff007a;
+  --green-neon: #adff2f;
+  --orange-neon: #ffa500;
+  --panel-bg: rgba(10, 10, 18, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-green-neon: var(--green-neon);
+  --color-orange-neon: var(--orange-neon);
+  --color-panel-bg: var(--panel-bg);
+  --color-glass-border: var(--glass-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  margin: 0;
+  overflow: hidden;
+}
+
+.leaflet-container {
+  width: 100vw;
+  height: 100vh;
+  background: var(--background) !important;
+  position: relative;
+  z-index: 0;
+}
+
+.map-crosshair .leaflet-container {
+  cursor: crosshair;
+}
+
+.glass {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
 }
