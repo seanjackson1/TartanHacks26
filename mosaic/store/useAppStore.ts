@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { User, MatchResult, Mode } from "@/types/api";
 
 interface AppState {
@@ -29,36 +30,47 @@ interface AppState {
   setLoading: (isLoading: boolean, message?: string) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  currentUser: null,
-  setCurrentUser: (user) => set({ currentUser: user }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      currentUser: null,
+      setCurrentUser: (user) => set({ currentUser: user }),
 
-  markers: [],
-  setMarkers: (markers) => set({ markers }),
-  addMarkers: (newMarkers) =>
-    set((s) => ({
-      markers: [
-        ...s.markers,
-        ...newMarkers.filter((n) => !s.markers.some((m) => m.id === n.id)),
-      ],
-    })),
+      markers: [],
+      setMarkers: (markers) => set({ markers }),
+      addMarkers: (newMarkers) =>
+        set((s) => ({
+          markers: [
+            ...s.markers,
+            ...newMarkers.filter((n) => !s.markers.some((m) => m.id === n.id)),
+          ],
+        })),
 
-  mode: "harmony",
-  setMode: (mode) => set({ mode }),
-  matches: [],
-  setMatches: (matches) => set({ matches }),
-  isSearching: false,
-  setIsSearching: (v) => set({ isSearching: v }),
+      mode: "harmony",
+      setMode: (mode) => set({ mode }),
+      matches: [],
+      setMatches: (matches) => set({ matches }),
+      isSearching: false,
+      setIsSearching: (v) => set({ isSearching: v }),
 
-  selectedMatch: null,
-  setSelectedMatch: (match) => set({ selectedMatch: match }),
-  selectedIndex: 0,
-  setSelectedIndex: (index) => set({ selectedIndex: index }),
+      selectedMatch: null,
+      setSelectedMatch: (match) => set({ selectedMatch: match }),
+      selectedIndex: 0,
+      setSelectedIndex: (index) => set({ selectedIndex: index }),
 
-  isOnboarding: true,
-  setIsOnboarding: (v) => set({ isOnboarding: v }),
+      isOnboarding: true,
+      setIsOnboarding: (v) => set({ isOnboarding: v }),
 
-  isLoading: false,
-  loadingMessage: "",
-  setLoading: (isLoading, message = "") => set({ isLoading, loadingMessage: message }),
-}));
+      isLoading: false,
+      loadingMessage: "",
+      setLoading: (isLoading, message = "") => set({ isLoading, loadingMessage: message }),
+    }),
+    {
+      name: "mosaic-app-state",
+      partialize: (state) => ({
+        isOnboarding: state.isOnboarding,
+        currentUser: state.currentUser,
+      }),
+    }
+  )
+);

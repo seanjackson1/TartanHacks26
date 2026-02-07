@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Youtube, Gamepad2, Github } from "lucide-react";
+import { motion } from "framer-motion";
+import { Youtube, Gamepad2, Github, Loader2, Sparkles } from "lucide-react";
 import PlatformConnectButton from "./PlatformConnectButton";
 
 interface OnboardingData {
@@ -38,6 +39,7 @@ export default function InterestInput({
 
   const [instagramHandle, setInstagramHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +63,7 @@ export default function InterestInput({
       .map((s) => s.trim())
       .filter(Boolean);
 
+    setIsSubmitting(true);
     onSubmit({
       username: username.trim(),
       interests,
@@ -197,12 +200,33 @@ export default function InterestInput({
       )}
 
       {/* Submit */}
-      <button
+      <motion.button
         type="submit"
-        className="w-full py-3 rounded-lg bg-cyan text-background font-semibold hover:bg-cyan/80 transition-colors"
+        disabled={isSubmitting}
+        whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(0, 242, 255, 0.4)" }}
+        whileTap={{ scale: 0.98 }}
+        className={`
+          w-full py-3 rounded-lg font-semibold
+          transition-all duration-300 relative overflow-hidden
+          ${isSubmitting 
+            ? 'bg-cyan/50 cursor-wait' 
+            : 'bg-cyan hover:bg-cyan/90'}
+          text-background
+          disabled:opacity-70
+        `}
       >
-        Find My People
-      </button>
+        {isSubmitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Building Your Mosaic...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            Find My People
+          </span>
+        )}
+      </motion.button>
     </form>
   );
 }

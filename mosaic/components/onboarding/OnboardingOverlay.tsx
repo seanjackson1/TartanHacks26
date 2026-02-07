@@ -63,6 +63,21 @@ export default function OnboardingOverlay() {
   }) => {
     setLoading(true, "Building your profile...");
     try {
+      // Get avatar from Google OAuth session
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session user metadata:", session?.user?.user_metadata);
+      console.log("Full session user:", session?.user);
+      
+      // Try multiple possible locations for Google avatar
+      const user = session?.user;
+      const avatarUrl = 
+        user?.user_metadata?.avatar_url ||
+        user?.user_metadata?.picture ||
+        (user?.identities?.[0]?.identity_data as any)?.avatar_url ||
+        (user?.identities?.[0]?.identity_data as any)?.picture;
+      
+      console.log("Resolved avatar URL:", avatarUrl);
+
       const res = await api.ingest({
         username: data.username,
         interests: data.interests,
@@ -84,6 +99,7 @@ export default function OnboardingOverlay() {
         bio: data.bio,
         ideology_score: data.ideology_score,
         instagram_handle: data.instagram_handle,
+        avatar_url: avatarUrl,
       });
       setIsOnboarding(false);
     } catch (err) {
@@ -92,6 +108,7 @@ export default function OnboardingOverlay() {
       setLoading(false);
     }
   };
+
 
   return (
     <AnimatePresence>

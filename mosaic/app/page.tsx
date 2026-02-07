@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 import ControlPanel from "@/components/map/ControlPanel";
 import ProfileCard from "@/components/profile/ProfileCard";
+import ProfileButton from "@/components/profile/ProfileButton";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 const MapWrapper = dynamic(() => import("@/components/map/MapWrapper"), {
@@ -18,7 +19,9 @@ export default function Home() {
       <OnboardingOverlay />
       <ControlPanel />
       <ProfileCard />
+      <ProfileButton />
       <LoadingOverlay />
     </main>
   );
 }
+

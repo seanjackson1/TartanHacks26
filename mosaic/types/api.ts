@@ -8,6 +8,7 @@ export interface User {
   ideology_score?: number;
   latitude: number;
   longitude: number;
+  avatar_url?: string;
   instagram_handle?: string;
   youtube_username?: string;
   steam_id?: string;
