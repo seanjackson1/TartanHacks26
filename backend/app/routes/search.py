@@ -26,7 +26,7 @@ def _parse_location(location: str | None) -> tuple[float, float] | None:
     """
     if not location:
         return None
-    
+
     # Check if it's WKT format (legacy fallback)
     if "POINT" in location:
         try:
@@ -37,15 +37,15 @@ def _parse_location(location: str | None) -> tuple[float, float] | None:
             return (lat, lon)
         except (IndexError, ValueError):
             return None
-    
+
     # Parse EWKB hex format
     try:
         wkb = bytes.fromhex(location)
         if len(wkb) < 25:
             return None
         # EWKB Point with SRID: byte 9 = lon, byte 17 = lat (little-endian doubles)
-        lon = struct.unpack_from('<d', wkb, 9)[0]
-        lat = struct.unpack_from('<d', wkb, 17)[0]
+        lon = struct.unpack_from("<d", wkb, 9)[0]
+        lat = struct.unpack_from("<d", wkb, 17)[0]
         return (lat, lon)
     except (ValueError, struct.error):
         return None
@@ -74,11 +74,12 @@ def search(
             limit=request.limit,
         )
     else:
-        min_distance = (request.radius_km or 5000) * 1000
+        # Contrast mode: find people with different interests (low similarity)
+        # No distance filter - contrast is about diversity of interests, not location
         matches = find_contrast_matches(
             query_embedding=embedding,
             user_location_wkt=location,
-            min_distance_meters=min_distance,
+            min_distance_meters=0,  # No minimum distance requirement
             limit=request.limit,
         )
 
