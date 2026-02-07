@@ -1,6 +1,6 @@
 """
-Pydantic data models for the Global Mosaic / CommonGround API.
-Based on PROJECT.md and CLAUDE.md specifications.
+Pydantic data models for the Global Mosaic API.
+Uses OpenRouter with intfloat/e5-large-v2 (1024 dimensions).
 """
 
 from datetime import datetime
@@ -9,6 +9,13 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+
+EMBEDDING_DIMENSIONS = 1024  # intfloat/e5-large-v2
 
 
 # ============================================================================
@@ -23,13 +30,13 @@ class Mode(str, Enum):
     CONTRAST = "contrast"  # Find diverse users (cosine similarity DESC)
 
 
-class ClusterType(int, Enum):
-    """User cluster categories based on interests."""
+class InterestCluster(str, Enum):
+    """User interest cluster categories for marker colors."""
 
-    TECH_DEV = 1  # #00F2FF (Cyan)
-    CREATIVE_ARTS = 2  # #FF007A (Magenta)
-    GAMING_ESPORTS = 3  # #ADFF2F (Green)
-    FITNESS_OUTDOORS = 4  # #FFA500 (Orange)
+    TECH_DEV = "tech"  # #00F2FF (Cyan)
+    CREATIVE_ARTS = "arts"  # #FF007A (Magenta)
+    GAMING = "gaming"  # #ADFF2F (Green)
+    FITNESS = "fitness"  # #FFA500 (Orange)
 
 
 class InterestSource(str, Enum):
@@ -47,7 +54,7 @@ class InterestSource(str, Enum):
 
 
 class User(BaseModel):
-    """User profile from the `users` / `profiles` table."""
+    """User profile from the `profiles` table."""
 
     id: UUID
     username: str
@@ -59,12 +66,11 @@ class User(BaseModel):
     longitude: float
     discord_handle: Optional[str] = None
     embedding: Optional[list[float]] = Field(
-        None, description="1536-dim vector from OpenAI"
+        None, description="1024-dim vector from intfloat/e5-large-v2"
     )
-    cluster_id: Optional[int] = None
     marker_color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
     metadata: Optional[dict] = None  # JSONB for extracted top interests
-    dna_string: Optional[str] = None  # Raw text: "Spotify: X, Steam: Y"
+    dna_string: Optional[str] = None  # Raw text for embedding
 
     class Config:
         from_attributes = True
@@ -108,7 +114,6 @@ class IngestResponse(BaseModel):
     """Response body for POST /ingest."""
 
     user_id: UUID
-    cluster_id: int
     marker_color: str
     message: str = "Profile successfully created and vectorized"
 
@@ -171,7 +176,6 @@ class UserResponse(BaseModel):
     id: UUID
     username: str
     bio: Optional[str] = None
-    cluster_id: Optional[int] = None
     marker_color: Optional[str] = None
     metadata: Optional[dict] = None
 
@@ -197,8 +201,8 @@ MATCHING_WEIGHTS = {
 }
 
 CLUSTER_COLORS = {
-    ClusterType.TECH_DEV: "#00F2FF",  # Cyan
-    ClusterType.CREATIVE_ARTS: "#FF007A",  # Magenta
-    ClusterType.GAMING_ESPORTS: "#ADFF2F",  # Green
-    ClusterType.FITNESS_OUTDOORS: "#FFA500",  # Orange
+    InterestCluster.TECH_DEV: "#00F2FF",  # Cyan
+    InterestCluster.CREATIVE_ARTS: "#FF007A",  # Magenta
+    InterestCluster.GAMING: "#ADFF2F",  # Green
+    InterestCluster.FITNESS: "#FFA500",  # Orange
 }

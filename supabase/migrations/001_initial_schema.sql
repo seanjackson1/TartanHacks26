@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- ============================================================================
 -- Table: profiles
--- Using 768-dimension vectors for Google text-embedding-004
+-- Using 1024-dimension vectors for intfloat/e5-large-v2 via OpenRouter
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     ideology_score INT CHECK (ideology_score >= 1 AND ideology_score <= 10),
     location GEOGRAPHY(Point, 4326),
     discord_handle TEXT,
-    embedding VECTOR(768),  -- Google text-embedding-004
+    embedding VECTOR(1024),  -- intfloat/e5-large-v2 via OpenRouter
     marker_color VARCHAR(7),
     metadata JSONB,
     dna_string TEXT,
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_interests_user_id ON interests(user_id);
 
 -- Harmony mode: Find similar users using cosine distance
 CREATE OR REPLACE FUNCTION find_harmony_matches(
-    query_embedding VECTOR(768),
+    query_embedding VECTOR(1024),
     user_location GEOGRAPHY,
     match_limit INT DEFAULT 10
 )
@@ -71,7 +71,7 @@ $$ LANGUAGE plpgsql;
 
 -- Contrast mode: Find diverse users (dissimilar + far away)
 CREATE OR REPLACE FUNCTION find_contrast_matches(
-    query_embedding VECTOR(768),
+    query_embedding VECTOR(1024),
     user_location GEOGRAPHY,
     min_distance_meters FLOAT DEFAULT 5000000,  -- 5000km default
     match_limit INT DEFAULT 10

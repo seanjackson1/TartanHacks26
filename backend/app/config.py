@@ -1,6 +1,6 @@
 """
 Application configuration using environment variables.
-Updated for Google Gemini AI (2026 Edition).
+Uses OpenRouter as the AI provider.
 """
 
 from pydantic_settings import BaseSettings
@@ -13,8 +13,9 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_service_role_key: str
 
-    # Google Gemini AI
-    gemini_api_key: str
+    # OpenRouter
+    openrouter_api_key: str
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # Spotify (optional)
     spotipy_client_id: str = ""
