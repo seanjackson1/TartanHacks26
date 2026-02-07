@@ -9,6 +9,7 @@ import requests
 from app.config import settings
 
 OAUTH_TABLE = "oauth_accounts"
+PROFILES_TABLE = "profiles"
 
 
 def _rest_base() -> str:
@@ -65,3 +66,98 @@ def get_oauth_account(user_id: str, provider: str) -> Optional[dict[str, Any]]:
     resp.raise_for_status()
     data = resp.json()
     return data[0] if isinstance(data, list) and data else None
+
+
+def upsert_profile(
+    *,
+    user_id: Optional[str] = None,
+    username: str,
+    location_wkt: str,
+    embedding: list[float],
+    bio: Optional[str] = None,
+    ideology_score: Optional[int] = None,
+    instagram_handle: Optional[str] = None,
+    marker_color: Optional[str] = None,
+    metadata: Optional[dict[str, Any]] = None,
+    dna_string: Optional[str] = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "username": username,
+        "bio": bio,
+        "ideology_score": ideology_score,
+        "location": location_wkt,
+        "instagram_handle": instagram_handle,
+        "embedding": embedding,
+        "marker_color": marker_color,
+        "metadata": metadata,
+        "dna_string": dna_string,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if user_id:
+        payload["id"] = user_id
+    url = f"{_rest_base()}/{PROFILES_TABLE}"
+    params = {"on_conflict": "username"}
+    headers = _headers() | {"Prefer": "resolution=merge-duplicates,return=representation"}
+    resp = requests.post(url, params=params, json=payload, headers=headers, timeout=20)
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else payload
+
+
+def get_profile_by_id(user_id: str) -> Optional[dict[str, Any]]:
+    url = f"{_rest_base()}/{PROFILES_TABLE}"
+    query = {"id": f"eq.{user_id}", "limit": 1}
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else None
+
+
+def get_profiles_by_ids(user_ids: list[str]) -> list[dict[str, Any]]:
+    if not user_ids:
+        return []
+    url = f"{_rest_base()}/{PROFILES_TABLE}"
+    id_list = ",".join(user_ids)
+    query = {"id": f"in.({id_list})"}
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data if isinstance(data, list) else []
+
+
+def find_harmony_matches(
+    *,
+    query_embedding: list[float],
+    user_location_wkt: str,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    url = f"{_rest_base()}/rpc/find_harmony_matches"
+    payload = {
+        "query_embedding": query_embedding,
+        "user_location": user_location_wkt,
+        "match_limit": limit,
+    }
+    resp = requests.post(url, json=payload, headers=_headers(), timeout=20)
+    resp.raise_for_status()
+    data = resp.json()
+    return data if isinstance(data, list) else []
+
+
+def find_contrast_matches(
+    *,
+    query_embedding: list[float],
+    user_location_wkt: str,
+    min_distance_meters: float = 5_000_000,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    url = f"{_rest_base()}/rpc/find_contrast_matches"
+    payload = {
+        "query_embedding": query_embedding,
+        "user_location": user_location_wkt,
+        "min_distance_meters": min_distance_meters,
+        "match_limit": limit,
+    }
+    resp = requests.post(url, json=payload, headers=_headers(), timeout=20)
+    resp.raise_for_status()
+    data = resp.json()
+    return data if isinstance(data, list) else []

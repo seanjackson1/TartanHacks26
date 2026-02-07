@@ -62,9 +62,9 @@ class User(BaseModel):
     ideology_score: Optional[int] = Field(
         None, ge=1, le=10, description="1=Left, 10=Right"
     )
-    latitude: float
-    longitude: float
-    discord_handle: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    instagram_handle: Optional[str] = None
     embedding: Optional[list[float]] = Field(
         None, description="1024-dim vector from intfloat/e5-large-v2"
     )
@@ -99,6 +99,7 @@ class Interest(BaseModel):
 class IngestRequest(BaseModel):
     """Request body for POST /ingest."""
 
+    user_id: Optional[UUID] = None
     username: str
     interests: list[str] = Field(
         ..., description="List of interest strings to vectorize"
@@ -107,7 +108,7 @@ class IngestRequest(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     bio: Optional[str] = None
     ideology_score: Optional[int] = Field(None, ge=1, le=10)
-    discord_handle: Optional[str] = None
+    instagram_handle: Optional[str] = None
 
 
 class IngestResponse(BaseModel):
@@ -124,7 +125,6 @@ class IngestResponse(BaseModel):
 class SearchRequest(BaseModel):
     """Request body for POST /search."""
 
-    user_id: UUID
     mode: Mode
     limit: int = Field(10, ge=1, le=100)
     radius_km: Optional[float] = Field(
@@ -167,7 +167,7 @@ class UserCreate(BaseModel):
     ideology_score: Optional[int] = Field(None, ge=1, le=10)
     latitude: float
     longitude: float
-    discord_handle: Optional[str] = None
+    instagram_handle: Optional[str] = None
 
 
 class UserResponse(BaseModel):
