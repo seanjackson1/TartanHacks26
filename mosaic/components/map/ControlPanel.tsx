@@ -3,14 +3,11 @@
 import { motion } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/lib/api";
-import type { Mode } from "@/types/api";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ControlPanel() {
   const {
     currentUser,
-    mode,
-    setMode,
     matches,
     setMatches,
     addMarkers,
@@ -28,7 +25,7 @@ export default function ControlPanel() {
     try {
       const res = await api.search({
         user_id: currentUser.id,
-        mode,
+        mode: "harmony",
         limit: 10,
       });
       console.log("Search response:", res);
@@ -62,11 +59,6 @@ export default function ControlPanel() {
     setSelectedMatch(matches[newIndex]);
   };
 
-  const modes: { value: Mode; label: string; color: string }[] = [
-    { value: "harmony", label: "Harmony", color: "var(--cyan)" },
-    { value: "contrast", label: "Contrast", color: "var(--magenta)" },
-  ];
-
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -74,33 +66,16 @@ export default function ControlPanel() {
       transition={{ delay: 0.3, type: "spring", damping: 25 }}
       className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 glass px-6 py-4 flex items-center gap-4"
     >
-      {/* Mode Toggle */}
-      <div className="flex rounded-lg overflow-hidden border border-glass-border">
-        {modes.map((m) => (
-          <button
-            key={m.value}
-            onClick={() => setMode(m.value)}
-            className="px-4 py-2 text-sm font-medium transition-all"
-            style={{
-              background: mode === m.value ? m.color : "transparent",
-              color: mode === m.value ? "var(--background)" : "var(--foreground)",
-            }}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-
       {/* Search Button */}
       <button
         onClick={handleSearch}
-        className="px-6 py-2 rounded-lg font-semibold text-sm transition-all"
+        className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
         style={{
-          background: mode === "harmony" ? "var(--cyan)" : "var(--magenta)",
+          background: "var(--cyan)",
           color: "var(--background)",
         }}
       >
-        Find Connections
+        Find My People
       </button>
 
       {/* Navigation Controls - shown when there are results */}
@@ -130,4 +105,3 @@ export default function ControlPanel() {
     </motion.div>
   );
 }
-
