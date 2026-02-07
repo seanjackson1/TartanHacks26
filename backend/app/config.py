@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
 
+    # Discord (optional)
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+
     # Steam (optional)
     steam_api_key: str = ""
 

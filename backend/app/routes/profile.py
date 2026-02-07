@@ -33,29 +33,74 @@ class ConnectionsResponse(BaseModel):
     available: list[str]
 
 
-def _parse_location(location: str | None) -> tuple[float, float] | None:
-    """Parse PostGIS EWKB hex string to (latitude, longitude) tuple."""
+def _parse_location(location: str | dict | None) -> tuple[float, float] | None:
+    """Parse PostGIS EWKB hex string OR GeoJSON dict to (latitude, longitude) tuple."""
     if not location:
         return None
 
-    if "POINT" in location:
+    # Handle GeoJSON dict (typically returned by PostgREST 9+)
+    if isinstance(location, dict):
+        try:
+            coords = location.get("coordinates")
+            if coords and len(coords) >= 2:
+                # GeoJSON coordinates are [lon, lat]
+                return (float(coords[1]), float(coords[0]))
+        except (IndexError, ValueError, TypeError):
+            return None
+        return None
+
+    # Handle WKT string (e.g. "POINT(lon lat)")
+    if isinstance(location, str) and "POINT" in location:
         try:
             inner = location.split("(")[1].split(")")[0]
             parts = inner.strip().split()
             lon, lat = float(parts[0]), float(parts[1])
             return (lat, lon)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, AttributeError):
             return None
 
+    # Handle WKB hex string
     try:
-        wkb = bytes.fromhex(location)
-        if len(wkb) < 25:
-            return None
-        lon = struct.unpack_from("<d", wkb, 9)[0]
-        lat = struct.unpack_from("<d", wkb, 17)[0]
-        return (lat, lon)
-    except (ValueError, struct.error):
-        return None
+        # bytes.fromhex raises TypeError if input is not str
+        if isinstance(location, str):
+            wkb = bytes.fromhex(location)
+            if len(wkb) < 25:
+                return None
+            lon = struct.unpack_from("<d", wkb, 9)[0]
+            lat = struct.unpack_from("<d", wkb, 17)[0]
+            return (lat, lon)
+    except (ValueError, TypeError, struct.error):
+        pass
+
+    return None
+
+
+@router.get("/profile/{user_id}", response_model=User | None)
+def get_public_profile(
+    user_id: str, current_user: dict = Depends(get_current_user)
+) -> User | None:
+    """Get a specific user's public profile."""
+    profile = get_profile_by_id(user_id)
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    parsed_loc = _parse_location(profile.get("location"))
+    lat = parsed_loc[0] if parsed_loc else None
+    lon = parsed_loc[1] if parsed_loc else None
+
+    return User(
+        id=profile["id"],
+        username=profile["username"],
+        bio=profile.get("bio"),
+        ideology_score=profile.get("ideology_score"),
+        latitude=lat,
+        longitude=lon,
+        instagram_handle=profile.get("instagram_handle"),
+        marker_color=profile.get("marker_color"),
+        metadata=profile.get("metadata"),
+        dna_string=profile.get("dna_string"),
+    )
 
 
 @router.get("/profile", response_model=User | None)
@@ -129,7 +174,9 @@ def patch_profile(
 
 
 @router.get("/profile/connections", response_model=ConnectionsResponse)
-def get_connections(current_user: dict = Depends(get_current_user)) -> ConnectionsResponse:
+def get_connections(
+    current_user: dict = Depends(get_current_user),
+) -> ConnectionsResponse:
     """Get list of connected and available OAuth providers."""
     user_id = str(current_user.get("id"))
     connected = get_connected_providers(user_id)
@@ -188,22 +235,21 @@ def _save_profile_with_pipeline_result(
 
 @router.put("/profile/interests", response_model=RefreshResponse)
 def update_interests(
-    body: UpdateInterestsRequest,
-    current_user: dict = Depends(get_current_user)
+    body: UpdateInterestsRequest, current_user: dict = Depends(get_current_user)
 ) -> RefreshResponse:
     """Update user interests and regenerate dna_string/embedding."""
     user_id = str(current_user.get("id"))
-    
+
     # Validate interests
     interests = [i.strip() for i in body.interests if i.strip()]
     if not interests:
         raise HTTPException(status_code=400, detail="Interests cannot be empty")
-    
+
     # Get existing profile
     profile = get_profile_by_id(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     # Run the shared profile pipeline
     result = run_profile_pipeline(
         username=profile.get("username", "User"),
@@ -211,7 +257,7 @@ def update_interests(
         user_interests=interests,
         user_id=user_id,
     )
-    
+
     # Save profile
     _save_profile_with_pipeline_result(
         user_id=user_id,
@@ -219,7 +265,7 @@ def update_interests(
         result=result,
         current_user=current_user,
     )
-    
+
     return RefreshResponse(
         success=True,
         interests_count=len(result.all_interests),
@@ -231,19 +277,19 @@ def update_interests(
 def refresh_profile(current_user: dict = Depends(get_current_user)) -> RefreshResponse:
     """Regenerate dna_string and embedding with latest platform data."""
     user_id = str(current_user.get("id"))
-    
+
     # Get existing profile
     profile = get_profile_by_id(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     # Get existing interests from metadata
     metadata = profile.get("metadata") or {}
     existing_interests = metadata.get("all_interests") or []
-    
+
     if not existing_interests:
         raise HTTPException(status_code=400, detail="No interests found")
-    
+
     # Run the shared profile pipeline
     result = run_profile_pipeline(
         username=profile.get("username", "User"),
@@ -251,7 +297,7 @@ def refresh_profile(current_user: dict = Depends(get_current_user)) -> RefreshRe
         user_interests=existing_interests,
         user_id=user_id,
     )
-    
+
     # Save profile
     _save_profile_with_pipeline_result(
         user_id=user_id,
@@ -259,7 +305,7 @@ def refresh_profile(current_user: dict = Depends(get_current_user)) -> RefreshRe
         result=result,
         current_user=current_user,
     )
-    
+
     return RefreshResponse(
         success=True,
         interests_count=len(result.all_interests),

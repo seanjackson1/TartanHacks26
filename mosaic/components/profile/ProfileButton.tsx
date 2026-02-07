@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppStore } from "@/store/useAppStore";
 import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles, MessageCircle } from "lucide-react";
+import { siDiscord } from "simple-icons/icons";
 import { supabase } from "@/lib/supabase";
 import { api, ConnectionsResponse } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
@@ -202,6 +203,17 @@ export default function ProfileButton() {
       case "steam": return <Gamepad2 className="w-4 h-4" />;
       case "github": return <Github className="w-4 h-4" />;
       case "spotify": return <Music className="w-4 h-4" />;
+      case "discord":
+        return (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            role="img"
+            aria-label="Discord"
+          >
+            <path d={siDiscord.path} fill="currentColor" />
+          </svg>
+        );
       default: return null;
     }
   };
@@ -212,6 +224,7 @@ export default function ProfileButton() {
       case "steam": return "text-blue-400 bg-blue-500/20";
       case "github": return "text-gray-400 bg-gray-500/20";
       case "spotify": return "text-green-400 bg-green-500/20";
+      case "discord": return "text-indigo-400 bg-indigo-500/20";
       default: return "text-gray-400 bg-gray-500/20";
     }
   };
@@ -403,7 +416,7 @@ export default function ProfileButton() {
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <div className="text-xs text-white/50 uppercase tracking-wider px-3 mb-2">Connected Apps</div>
                   <div className="space-y-1">
-                    {["youtube", "steam", "github", "spotify"].map((provider) => {
+                    {["youtube", "steam", "github", "spotify", "discord"].map((provider) => {
                       const isConnected = connections?.connected.includes(provider);
                       const isConnecting = connectingProvider === provider;
                       return (

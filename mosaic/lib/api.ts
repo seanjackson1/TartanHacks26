@@ -126,6 +126,7 @@ export const api = {
   search: (data: SearchRequest) =>
     post<SearchRequest, SearchResponse>("/search", data),
   getProfile: () => get<User>("/profile"),
+  getPublicProfile: (userId: string) => get<User>(`/profile/${userId}`),
   updateProfile: (data: ProfileUpdateRequest) =>
     patch<ProfileUpdateRequest, User>("/profile", data),
   getConnections: () => get<ConnectionsResponse>("/profile/connections"),

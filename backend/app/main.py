@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import (
     auth_router,
+    discord_router,
     ingest_router,
     messaging_router,
     profile_router,
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(discord_router)
 app.include_router(ingest_router)
 app.include_router(messaging_router)
 app.include_router(profile_router)

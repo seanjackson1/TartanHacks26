@@ -18,37 +18,45 @@ from app.models.schemas import MatchResult, Mode, SearchRequest, SearchResponse,
 router = APIRouter()
 
 
-def _parse_location(location: str | None) -> tuple[float, float] | None:
-    """
-    Parse PostGIS EWKB hex string to (latitude, longitude) tuple.
-    PostGIS returns geography as EWKB hex like: 0101000020E6100000...
-    Format: endian(1) + type_with_srid(4) + srid(4) + lon(8) + lat(8)
-    """
+def _parse_location(location: str | dict | None) -> tuple[float, float] | None:
+    """Parse PostGIS EWKB hex string OR GeoJSON dict to (latitude, longitude) tuple."""
     if not location:
         return None
 
-    # Check if it's WKT format (legacy fallback)
-    if "POINT" in location:
+    # Handle GeoJSON dict
+    if isinstance(location, dict):
         try:
-            # POINT(-79.94 40.44) or SRID=4326;POINT(-79.94 40.44)
+            coords = location.get("coordinates")
+            if coords and len(coords) >= 2:
+                # GeoJSON coordinates are [lon, lat]
+                return (float(coords[1]), float(coords[0]))
+        except (IndexError, ValueError, TypeError):
+            return None
+        return None
+
+    # Handle WKT string
+    if isinstance(location, str) and "POINT" in location:
+        try:
             inner = location.split("(")[1].split(")")[0]
             parts = inner.strip().split()
             lon, lat = float(parts[0]), float(parts[1])
             return (lat, lon)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, AttributeError):
             return None
 
-    # Parse EWKB hex format
+    # Handle WKB hex string
     try:
-        wkb = bytes.fromhex(location)
-        if len(wkb) < 25:
-            return None
-        # EWKB Point with SRID: byte 9 = lon, byte 17 = lat (little-endian doubles)
-        lon = struct.unpack_from("<d", wkb, 9)[0]
-        lat = struct.unpack_from("<d", wkb, 17)[0]
-        return (lat, lon)
-    except (ValueError, struct.error):
-        return None
+        if isinstance(location, str):
+            wkb = bytes.fromhex(location)
+            if len(wkb) < 25:
+                return None
+            lon = struct.unpack_from("<d", wkb, 9)[0]
+            lat = struct.unpack_from("<d", wkb, 17)[0]
+            return (lat, lon)
+    except (ValueError, TypeError, struct.error):
+        pass
+
+    return None
 
 
 @router.post("/search", response_model=SearchResponse)
@@ -61,16 +69,24 @@ def search(
         raise HTTPException(status_code=404, detail="User not found.")
 
     embedding = profile.get("embedding")
-    location = profile.get("location")
-    if not embedding or not location:
+    location_data = profile.get("location")
+
+    # robustly parse location
+    parsed_loc = _parse_location(location_data)
+
+    if not embedding or not parsed_loc:
         raise HTTPException(
             status_code=400, detail="User must have embedding and location."
         )
 
+    # Reconstruct WKT for RPC calls to ensure valid format
+    lat, lon = parsed_loc
+    location_wkt = f"SRID=4326;POINT({lon} {lat})"
+
     if request.mode == Mode.HARMONY:
         matches = find_harmony_matches(
             query_embedding=embedding,
-            user_location_wkt=location,
+            user_location_wkt=location_wkt,
             limit=request.limit,
         )
     else:
@@ -78,7 +94,7 @@ def search(
         # No distance filter - contrast is about diversity of interests, not location
         matches = find_contrast_matches(
             query_embedding=embedding,
-            user_location_wkt=location,
+            user_location_wkt=location_wkt,
             min_distance_meters=0,  # No minimum distance requirement
             limit=request.limit,
         )

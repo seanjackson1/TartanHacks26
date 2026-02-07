@@ -81,6 +81,8 @@ def _fetch_userinfo(provider: str, access_token: str) -> str:
         return str(data.get("id"))
     if provider == "github":
         return str(data.get("id"))
+    if provider == "discord":
+        return str(data.get("id"))
     if provider in {"google", "youtube"}:
         return str(data.get("sub"))
     return "unknown"

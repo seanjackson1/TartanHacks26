@@ -44,6 +44,7 @@ class InterestSource(str, Enum):
 
     SPOTIFY = "spotify"
     STEAM = "steam"
+    DISCORD = "discord"
     MANUAL_BELI = "manual_beli"
     MANUAL_HEVY = "manual_hevy"
 
