@@ -1,10 +1,17 @@
-This specification is designed to be ingested by an AI coding agent (like Cursor, Windsurf, or a custom GPT) to scaffold the entire project with minimal hallucination.
+For a hackathon where speed and cost-efficiency are king, **Cloudflare Workers AI** (specifically the `@cf/baai/bge-m3` model) or **Google Gemini API** (via `text-embedding-004`) are currently the best "free-forever" options.
 
-# Technical Specification: Project Global Mosaic
+Since you are already a student at CMU and likely have access to Google Cloud/AI Studio credits, and given that **Gemini 1.5 Flash/2.0** provides a massive free tier (1,500 requests per day), I have updated the spec to use **Google AI Studio (Gemini)**. It is significantly faster than OpenAI for free-tier users and requires no credit card for the initial tier.
+
+---
+
+# Technical Specification: Project Global Mosaic (2026 Edition)
 
 ## 1. System Overview
 
-**Global Mosaic** is a geospatial-social discovery platform. It uses **Next.js** (Frontend), **FastAPI** (Backend), and **Supabase** (Database/Vector Store). The core value prop is visualizing human similarity through high-dimensional vector embeddings displayed on a 2D map.
+**Global Mosaic** is a geospatial-social discovery platform. It uses **Next.js** (Frontend), **FastAPI** (Backend), and **Supabase** (Database/Vector Store).
+
+* **AI Provider**: Google AI Studio (Gemini) – chosen for its high-rate free tier and superior multilingual support.
+* **Vector Model**: `text-embedding-004` (768 dimensions).
 
 ---
 
@@ -18,7 +25,7 @@ The project is a monorepo split into `mosaic/` (Frontend) and `server/` (Backend
 │   ├── src/
 │   │   ├── components/     # UI: Map, ProfileCard, ControlPanel
 │   │   ├── hooks/          # useMapData, useUserLocation
-│   │   ├── lib/            # Supabase client, utils
+│   │   ├── lib/            # Supabase & Gemini client wrappers
 │   │   └── types/          # TypeScript interfaces (User, Vector, Mode)
 │   ├── public/             # Map assets, custom markers
 │   └── tailwind.config.ts  # Theme: Mosaic (Deep Navys, Neon Accents)
@@ -26,11 +33,11 @@ The project is a monorepo split into `mosaic/` (Frontend) and `server/` (Backend
 │   ├── app/
 │   │   ├── main.py         # Entry point
 │   │   ├── routes/         # /ingest, /search, /analytics
-│   │   ├── core/           # OpenAI logic, Vector math
+│   │   ├── core/           # Gemini Embedding logic, Vector math
 │   │   └── db/             # Supabase wrappers
 │   ├── scripts/            # generate_mosaic.py (Synthetic data)
-│   └── requirements.txt    # FastAPI, OpenAI, Postgis-helpers
-└── docker-compose.yml      # (Optional) For local dev
+│   └── requirements.txt    # FastAPI, google-generativeai, postgis-helpers
+└── .env                    # GEMINI_API_KEY, SUPABASE_URL, etc.
 
 ```
 
@@ -45,10 +52,9 @@ The project is a monorepo split into `mosaic/` (Frontend) and `server/` (Backend
 | `id` | UUID | Primary Key | Linked to Auth.users |
 | `username` | TEXT | Unique |  |
 | `location` | GEOGRAPHY(Point, 4326) | Index: GIST | Real-world coordinates |
-| `dna_string` | TEXT |  | Raw text: "Spotify: X, Steam: Y" |
-| `embedding` | VECTOR(1536) | Index: HNSW | OpenAI text-embedding-3-small |
-| `cluster_id` | INT |  | 1:Gamer, 2:Coder, 3:Artist, etc. |
-| `marker_color` | VARCHAR(7) |  | Hex code based on cluster_id |
+| `dna_string` | TEXT |  | Raw text for embedding |
+| `embedding` | VECTOR(768) | Index: HNSW | **Google text-embedding-004** output |
+| `marker_color` | VARCHAR(7) |  | Hex code based on interest cluster |
 | `metadata` | JSONB |  | Extracted top interests for UI cards |
 
 ---
@@ -57,25 +63,19 @@ The project is a monorepo split into `mosaic/` (Frontend) and `server/` (Backend
 
 ### `POST /ingest`
 
-* **Purpose**: Convert raw user data into a "Personality Vector."
+* **Provider**: `google.generativeai`
 * **Input**: `username`, `interests[]`, `latitude`, `longitude`.
 * **Logic**:
-1. Concatenate interests into a single semantic string.
-2. Call OpenAI `embeddings` API.
-3. Calculate "Cluster" based on top keyword frequency.
-4. Upsert to Supabase.
+1. Clean and concatenate strings into a semantic bio.
+2. Call `genai.embed_content(model="models/text-embedding-004", content=dna_string)`.
+3. Upsert to Supabase.
 
 
 
 ### `POST /search`
 
-* **Purpose**: Retrieve neighbors based on "Mode."
-* **Input**: `user_id`, `mode` ("harmony" | "contrast"), `limit`.
-* **Logic**:
-* **Harmony**: `ORDER BY embedding <=> query_vector ASC`.
-* **Contrast**: `ORDER BY embedding <=> query_vector DESC` + `WHERE ST_Distance > X`.
-
-
+* **Harmony Mode**: `ORDER BY embedding <=> query_vector ASC LIMIT 10`.
+* **Contrast Mode**: `ORDER BY embedding <=> query_vector DESC` + `WHERE ST_Distance(location, user_loc) > 5000000`.
 
 ---
 
@@ -83,40 +83,32 @@ The project is a monorepo split into `mosaic/` (Frontend) and `server/` (Backend
 
 ### The Map Engine (Leaflet)
 
-* **Tileset**: `Stadia.AlidadeSmoothDark` (to make colored dots pop).
-* **Rendering**: Use `CircleMarker` instead of standard Pins for a "Mosaic Tile" aesthetic.
+* **Tile Provider**: `Stadia.AlidadeSmoothDark` (or `CartoDB.DarkMatter`).
+* **Visuals**: Use **`CircleMarker`** (Canvas mode) to ensure 500+ dots don't lag the browser.
 * **Colors**:
 * `#00F2FF` (Cyan): Tech/Dev
 * `#FF007A` (Magenta): Creative/Arts
-* `#ADFF2F` (Green): Gaming/Esports
-* `#FFA500` (Orange): Fitness/Outdoors
+* `#ADFF2F` (Green): Gaming
+* `#FFA500` (Orange): Fitness
 
 
-
-### Animation Stack
-
-* **Framer Motion**: Use `AnimatePresence` for the "Profile Card" slide-in when a dot is clicked.
-* **D3.js Interop**: If `leafet.heat` is used, ensure the gradient matches the Mosaic neon palette.
 
 ---
 
 ## 6. Synthetic Data Strategy (`generate_mosaic.py`)
 
-To ensure the demo looks "Global" in a local hackathon environment:
+To populate the map for the demo:
 
-1. **Archetypes**: Define 5 JSON templates (e.g., *The Berlin Techno-Coder*).
-2. **Jittering**: Pick 20 global hubs (SF, NYC, London, Tokyo, Berlin). Apply a random Gaussian noise to the coordinates so points scatter realistically around cities.
-3. **Batching**: Use `psycopg2` or Supabase Python SDK to `upsert` 500+ records in a single transaction.
+1. **Archetypes**: Define 5 JSON "Personalities" (e.g., *The Tokyo J-Pop Fan*, *The NYC Rust Dev*).
+2. **Jittering**: Pick 50 global cities. Use `random.uniform(-0.05, 0.05)` on Lat/Long to create natural-looking clusters around urban hubs.
+3. **Batching**: Use the Gemini Python SDK's batch embedding feature to process all 500 users in seconds.
 
 ---
 
 ## 7. AI Agent Instructions (The "System Prompt")
 
-*When generating code for this project, follow these conventions:*
+* **Vector Dimensions**: Ensure `profiles` table is initialized with `vector(768)`.
+* **No Latency**: Use `TaskType.RETRIEVAL_QUERY` in Gemini embeddings for the search function to optimize for speed.
+* **Z-Index**: Ensure the "Profile Card" component has a higher z-index than the Leaflet map controls.
 
-* **Naming**: Use PascalCase for React components, snake_case for Python variables.
-* **Errors**: All API endpoints must return standard HTTP exception detail.
-* **Leaflet**: Always check if `window` is defined before rendering the Map component (Next.js SSR safety).
-* **Vector Logic**: Use Cosine Distance (`<=>`) for similarity, not Euclidean (`<->`).
-
-**Would you like me to generate the `generate_mosaic.py` script so you can immediately populate your database with these colorful global data points?**
+**Would you like me to generate the initialization SQL script to set up the `profiles` table with the correct 768-dimension vector support?**
