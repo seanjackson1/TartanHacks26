@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 import requests
 from authlib.integrations.requests_client import OAuth2Session
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import settings
 from app.core.oauth_providers import get_provider_config
@@ -25,9 +25,7 @@ STATE_TTL_SECONDS = 10 * 60
 
 def _sign_state(payload: dict[str, Any]) -> str:
     body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
-    sig = hmac.new(
-        settings.oauth_state_secret.encode(), body, hashlib.sha256
-    ).digest()
+    sig = hmac.new(settings.oauth_state_secret.encode(), body, hashlib.sha256).digest()
     return base64.urlsafe_b64encode(body + sig).decode()
 
 
@@ -52,9 +50,7 @@ def _redirect_uri(provider: str) -> str:
     return f"{settings.oauth_redirect_base_url}/auth/{provider}/callback"
 
 
-def _exchange_token(
-    provider: str, request: Request, code: str
-) -> dict[str, Any]:
+def _exchange_token(provider: str, request: Request, code: str) -> dict[str, Any]:
     cfg = get_provider_config(provider)
     if not cfg:
         raise HTTPException(status_code=404, detail="Unknown provider")
@@ -136,7 +132,7 @@ def oauth_callback(provider: str, request: Request, code: str, state: str):
         expires_at=expires_at,
         raw_token=token,
     )
-    return {"connected": True, "provider": provider, "provider_user_id": provider_user_id}
+    return HTMLResponse(content="<script>window.close();</script>", status_code=200)
 
 
 @router.post("/{provider}/refresh")
@@ -220,4 +216,4 @@ def steam_callback(request: Request, state: str):
         expires_at=None,
         raw_token={"steam_id": steam_id},
     )
-    return {"connected": True, "provider": "steam", "provider_user_id": steam_id}
+    return HTMLResponse(content="<script>window.close();</script>", status_code=200)
