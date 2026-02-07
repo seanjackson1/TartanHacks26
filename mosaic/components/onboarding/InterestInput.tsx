@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Youtube, Gamepad2, Github } from "lucide-react";
+import PlatformConnectButton from "./PlatformConnectButton";
 
 interface OnboardingData {
   username: string;
@@ -35,9 +37,6 @@ export default function InterestInput({
   const [bio, setBio] = useState("");
   const [ideologyScore, setIdeologyScore] = useState(5);
   const [instagramHandle, setInstagramHandle] = useState("");
-  const [youtubeUsername, setYoutubeUsername] = useState("");
-  const [steamId, setSteamId] = useState("");
-  const [githubUsername, setGithubUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,9 +67,9 @@ export default function InterestInput({
       bio: bio.trim(),
       ideology_score: ideologyScore,
       instagram_handle: instagramHandle.trim(),
-      youtube_username: youtubeUsername.trim(),
-      steam_id: steamId.trim(),
-      github_username: githubUsername.trim(),
+      youtube_username: "", // Handled via OAuth
+      steam_id: "", // Handled via OAuth  
+      github_username: "", // Handled via OAuth
     });
   };
 
@@ -167,26 +166,20 @@ export default function InterestInput({
           Connect Platforms (optional)
         </label>
         <div className="flex flex-col gap-2">
-          <input
-            type="text"
-            value={youtubeUsername}
-            onChange={(e) => setYoutubeUsername(e.target.value)}
-            placeholder="YouTube username"
-            className="bg-white/5 border border-glass-border rounded-lg px-3 py-2 text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-cyan/50"
+          <PlatformConnectButton
+            provider="youtube"
+            label="YouTube"
+            icon={<Youtube className="w-4 h-4" />}
           />
-          <input
-            type="text"
-            value={steamId}
-            onChange={(e) => setSteamId(e.target.value)}
-            placeholder="Steam ID"
-            className="bg-white/5 border border-glass-border rounded-lg px-3 py-2 text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-cyan/50"
+          <PlatformConnectButton
+            provider="steam"
+            label="Steam"
+            icon={<Gamepad2 className="w-4 h-4" />}
           />
-          <input
-            type="text"
-            value={githubUsername}
-            onChange={(e) => setGithubUsername(e.target.value)}
-            placeholder="GitHub username"
-            className="bg-white/5 border border-glass-border rounded-lg px-3 py-2 text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-cyan/50"
+          <PlatformConnectButton
+            provider="github"
+            label="GitHub"
+            icon={<Github className="w-4 h-4" />}
           />
         </div>
       </div>

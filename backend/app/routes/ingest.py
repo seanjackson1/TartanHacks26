@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.openrouter_logic import get_embedding
 from app.core.supabase_auth import get_current_user
 from app.db.supabase_client import upsert_profile
+from app.integrations.youtube import fetch_youtube_interests
 from app.models.schemas import (
     CLUSTER_COLORS,
     IngestRequest,
@@ -35,7 +36,18 @@ def ingest(
     request: IngestRequest, current_user: dict = Depends(get_current_user)
 ) -> IngestResponse:
     try:
+        user_id = str(current_user.get("id"))
+        print(f"DEBUG: ingest user_id={user_id!r}")
+        
+        # Get user-provided interests
         interests = [i.strip() for i in request.interests if i.strip()]
+        
+        # Fetch and merge YouTube interests (if OAuth connected)
+        youtube_interests = fetch_youtube_interests(user_id=user_id)
+        if youtube_interests:
+            print(f"DEBUG: Found {len(youtube_interests)} YouTube interests")
+            interests = interests + youtube_interests
+        
         if not interests:
             raise HTTPException(
                 status_code=400, detail="Interests list cannot be empty."
@@ -60,8 +72,6 @@ def ingest(
 
         location_wkt = f"SRID=4326;POINT({request.longitude} {request.latitude})"
 
-        user_id = str(current_user.get("id"))
-        print(f"DEBUG: ingest user_id={user_id!r}")
         if request.user_id and str(request.user_id) != user_id:
             raise HTTPException(status_code=403, detail="User ID mismatch.")
 
