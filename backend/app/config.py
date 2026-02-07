@@ -32,9 +32,16 @@ class Settings(BaseSettings):
     # Steam (optional)
     steam_api_key: str = ""
 
+    # Discord (optional)
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+
     # OAuth settings
     oauth_redirect_base_url: str = "http://localhost:8001"
     oauth_state_secret: str = "change-me"
+
+    # Redis
+    redis_url: str = "redis://localhost:6379"
 
     # App settings
     debug: bool = False

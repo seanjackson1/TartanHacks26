@@ -64,3 +64,19 @@ export interface SearchResponse {
   total_found: number;
   mode: Mode;
 }
+
+// Messaging types
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+  read_at?: string;
+}
+
+export interface SendMessageRequest {
+  receiver_id: string;
+  content: string;
+}
+

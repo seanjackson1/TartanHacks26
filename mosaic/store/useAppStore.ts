@@ -22,6 +22,10 @@ interface AppState {
   selectedIndex: number;
   setSelectedIndex: (index: number) => void;
 
+  // Chat state
+  chatRecipientId: string | null;
+  setChatRecipientId: (id: string | null) => void;
+
   isOnboarding: boolean;
   setIsOnboarding: (v: boolean) => void;
 
@@ -57,6 +61,10 @@ export const useAppStore = create<AppState>()(
       setSelectedMatch: (match) => set({ selectedMatch: match }),
       selectedIndex: 0,
       setSelectedIndex: (index) => set({ selectedIndex: index }),
+
+      // Chat state
+      chatRecipientId: null,
+      setChatRecipientId: (id) => set({ chatRecipientId: id }),
 
       isOnboarding: true,
       setIsOnboarding: (v) => set({ isOnboarding: v }),

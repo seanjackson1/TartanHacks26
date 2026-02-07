@@ -206,3 +206,55 @@ def find_contrast_matches(
     resp.raise_for_status()
     data = resp.json()
     return data if isinstance(data, list) else []
+
+
+# ============================================================================
+# Messages
+# ============================================================================
+
+MESSAGES_TABLE = "messages"
+
+
+def insert_message(
+    *,
+    sender_id: str,
+    receiver_id: str,
+    content: str,
+) -> dict[str, Any]:
+    """Insert a new message and return it."""
+    payload = {
+        "sender_id": sender_id,
+        "receiver_id": receiver_id,
+        "content": content,
+    }
+    url = f"{_rest_base()}/{MESSAGES_TABLE}"
+    headers = _headers() | {"Prefer": "return=representation"}
+    resp = requests.post(url, json=payload, headers=headers, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else payload
+
+
+def get_messages_between(
+    user_a: str,
+    user_b: str,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    """
+    Get paginated message history between two users.
+    Messages are returned in chronological order (oldest first).
+    """
+    url = f"{_rest_base()}/{MESSAGES_TABLE}"
+    # Query for messages where (sender=A AND receiver=B) OR (sender=B AND receiver=A)
+    query = {
+        "or": f"(and(sender_id.eq.{user_a},receiver_id.eq.{user_b}),and(sender_id.eq.{user_b},receiver_id.eq.{user_a}))",
+        "order": "created_at.asc",
+        "limit": limit,
+        "offset": offset,
+    }
+    resp = requests.get(url + "?" + urlencode(query), headers=_headers(), timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data if isinstance(data, list) else []
+
