@@ -1,0 +1,27 @@
+@env = local
+
+### Health check
+GET http://localhost:8001/health
+
+### Ingest (requires Supabase user access token)
+POST http://localhost:8001/ingest
+Authorization: Bearer {{SUPABASE_ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "username": "demo_user",
+  "interests": ["AI", "maps", "music", "fitness"],
+  "latitude": 40.4433,
+  "longitude": -79.9436,
+  "bio": "Testing ingest"
+}
+
+### Search (requires Supabase user access token)
+POST http://localhost:8001/search
+Authorization: Bearer {{SUPABASE_ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "mode": "harmony",
+  "limit": 10
+}
