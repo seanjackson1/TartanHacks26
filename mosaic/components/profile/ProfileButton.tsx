@@ -3,21 +3,41 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
-import { MapPin, User, Instagram, X, LogOut } from "lucide-react";
+import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 export default function ProfileButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const currentUser = useAppStore((s) => s.currentUser);
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const setIsOnboarding = useAppStore((s) => s.setIsOnboarding);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Edit form state
+  const [editUsername, setEditUsername] = useState("");
+  const [editLatitude, setEditLatitude] = useState("");
+  const [editLongitude, setEditLongitude] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+
+  // Initialize edit form when user changes or edit mode is entered
+  useEffect(() => {
+    if (currentUser && isEditing) {
+      setEditUsername(currentUser.username || "");
+      setEditLatitude(currentUser.latitude?.toString() || "");
+      setEditLongitude(currentUser.longitude?.toString() || "");
+      setEditInstagram(currentUser.instagram_handle || "");
+    }
+  }, [currentUser, isEditing]);
 
   // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setIsEditing(false);
       }
     };
     if (isOpen) {
@@ -32,6 +52,42 @@ export default function ProfileButton() {
     setIsOnboarding(true);
     setIsOpen(false);
     window.location.reload();
+  };
+
+  const handleSave = async () => {
+    if (!currentUser) return;
+
+    setIsSaving(true);
+    try {
+      const lat = parseFloat(editLatitude);
+      const lng = parseFloat(editLongitude);
+
+      const updated = await api.updateProfile({
+        username: editUsername || undefined,
+        latitude: !isNaN(lat) ? lat : undefined,
+        longitude: !isNaN(lng) ? lng : undefined,
+        instagram_handle: editInstagram || undefined,
+      });
+
+      if (updated) {
+        setCurrentUser({
+          ...currentUser,
+          username: updated.username || currentUser.username,
+          latitude: updated.latitude ?? currentUser.latitude,
+          longitude: updated.longitude ?? currentUser.longitude,
+          instagram_handle: updated.instagram_handle ?? currentUser.instagram_handle,
+        });
+      }
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
   };
 
   if (!currentUser) return null;
@@ -73,7 +129,10 @@ export default function ProfileButton() {
             {/* Header with avatar */}
             <div className="relative p-4 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border-b border-white/10">
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsEditing(false);
+                }}
                 className="absolute top-2 right-2 p-1 rounded-full hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4 text-white/60" />
@@ -92,11 +151,23 @@ export default function ProfileButton() {
                     </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold text-lg">
-                    {currentUser.username}
-                  </h3>
-                  <span className="text-xs text-cyan-400 font-mono">CONNECTED</span>
+                <div className="flex-1">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value)}
+                      className="w-full bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white font-semibold text-lg focus:outline-none focus:border-cyan-500"
+                      placeholder="Username"
+                    />
+                  ) : (
+                    <>
+                      <h3 className="text-white font-semibold text-lg">
+                        {currentUser.username}
+                      </h3>
+                      <span className="text-xs text-cyan-400 font-mono">CONNECTED</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -108,37 +179,99 @@ export default function ProfileButton() {
                 <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
                   <MapPin className="w-4 h-4 text-cyan-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-xs text-white/50 uppercase tracking-wider">Location</div>
-                  <div className="text-white text-sm font-mono">
-                    {currentUser.latitude.toFixed(4)}, {currentUser.longitude.toFixed(4)}
-                  </div>
+                  {isEditing ? (
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        type="text"
+                        value={editLatitude}
+                        onChange={(e) => setEditLatitude(e.target.value)}
+                        className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                        placeholder="Lat"
+                      />
+                      <input
+                        type="text"
+                        value={editLongitude}
+                        onChange={(e) => setEditLongitude(e.target.value)}
+                        className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                        placeholder="Lng"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-white text-sm font-mono">
+                      {currentUser.latitude.toFixed(4)}, {currentUser.longitude.toFixed(4)}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Instagram */}
-              {currentUser.instagram_handle && (
-                <a
-                  href={`https://instagram.com/${currentUser.instagram_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                    <Instagram className="w-4 h-4 text-pink-400" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-white/50 uppercase tracking-wider">Instagram</div>
-                    <div className="text-white text-sm group-hover:text-pink-400 transition-colors">
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <Instagram className="w-4 h-4 text-pink-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Instagram</div>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editInstagram}
+                      onChange={(e) => setEditInstagram(e.target.value)}
+                      className="w-full bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm mt-1 focus:outline-none focus:border-cyan-500"
+                      placeholder="@username"
+                    />
+                  ) : currentUser.instagram_handle ? (
+                    <a
+                      href={`https://instagram.com/${currentUser.instagram_handle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white text-sm hover:text-pink-400 transition-colors"
+                    >
                       @{currentUser.instagram_handle}
-                    </div>
-                  </div>
-                </a>
-              )}
+                    </a>
+                  ) : (
+                    <span className="text-white/40 text-sm">Not set</span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Logout */}
-            <div className="p-3 pt-0">
+            {/* Action Buttons */}
+            <div className="p-3 pt-0 space-y-2">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                  >
+                    <span className="text-sm font-medium">Cancel</span>
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span className="text-sm font-medium">Save</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span className="text-sm font-medium">Edit Profile</span>
+                </button>
+              )}
+
+              {/* Logout */}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors"

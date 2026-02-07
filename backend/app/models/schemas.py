@@ -173,6 +173,15 @@ class UserCreate(BaseModel):
     instagram_handle: Optional[str] = None
 
 
+class ProfileUpdateRequest(BaseModel):
+    """Request body for PATCH /profile."""
+
+    username: Optional[str] = None
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
+    instagram_handle: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     """Public user response (no embedding data)."""
 

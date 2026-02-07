@@ -2,6 +2,7 @@ import { API_BASE_URL } from "./constants";
 import type {
   IngestRequest,
   IngestResponse,
+  ProfileUpdateRequest,
   SearchRequest,
   SearchResponse,
   User,
@@ -23,6 +24,30 @@ async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
     headers: { 
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`API Error details for ${path}:`, err, res.status);
+    throw new Error(`API ${path} failed (${res.status}): ${err}`);
+  }
+  return res.json();
+}
+
+async function patch<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    throw new Error("No auth token found");
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PATCH",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(body),
   });
@@ -65,5 +90,7 @@ export const api = {
   search: (data: SearchRequest) =>
     post<SearchRequest, SearchResponse>("/search", data),
   getProfile: () => get<User>("/profile"),
+  updateProfile: (data: ProfileUpdateRequest) =>
+    patch<ProfileUpdateRequest, User>("/profile", data),
 };
 

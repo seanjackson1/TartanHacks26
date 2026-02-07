@@ -37,6 +37,13 @@ export interface IngestResponse {
   message: string;
 }
 
+export interface ProfileUpdateRequest {
+  username?: string;
+  latitude?: number;
+  longitude?: number;
+  instagram_handle?: string;
+}
+
 export interface SearchRequest {
   user_id: string;
   mode: Mode;

@@ -1,4 +1,6 @@
-"""GET /profile - Retrieve current user's profile."""
+"""GET /profile - Retrieve current user's profile.
+PATCH /profile - Update current user's profile.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +9,8 @@ import struct
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.supabase_auth import get_current_user
-from app.db.supabase_client import get_profile_by_id
-from app.models.schemas import User
+from app.db.supabase_client import get_profile_by_id, update_profile
+from app.models.schemas import ProfileUpdateRequest, User
 
 router = APIRouter()
 
@@ -62,4 +64,47 @@ def get_profile(current_user: dict = Depends(get_current_user)) -> User | None:
         marker_color=profile.get("marker_color"),
         metadata=profile.get("metadata"),
         dna_string=profile.get("dna_string"),
+    )
+
+
+@router.patch("/profile", response_model=User | None)
+def patch_profile(
+    body: ProfileUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+) -> User | None:
+    """Update the current user's profile."""
+    user_id = str(current_user.get("id"))
+
+    # Check that user has an existing profile
+    existing = get_profile_by_id(user_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    # Perform the update
+    updated = update_profile(
+        user_id,
+        username=body.username,
+        latitude=body.latitude,
+        longitude=body.longitude,
+        instagram_handle=body.instagram_handle,
+    )
+
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update profile")
+
+    parsed_loc = _parse_location(updated.get("location"))
+    lat = parsed_loc[0] if parsed_loc else None
+    lon = parsed_loc[1] if parsed_loc else None
+
+    return User(
+        id=updated["id"],
+        username=updated["username"],
+        bio=updated.get("bio"),
+        ideology_score=updated.get("ideology_score"),
+        latitude=lat,
+        longitude=lon,
+        instagram_handle=updated.get("instagram_handle"),
+        marker_color=updated.get("marker_color"),
+        metadata=updated.get("metadata"),
+        dna_string=updated.get("dna_string"),
     )

@@ -115,6 +115,36 @@ def get_profile_by_id(user_id: str) -> Optional[dict[str, Any]]:
     return data[0] if isinstance(data, list) and data else None
 
 
+def update_profile(
+    user_id: str,
+    *,
+    username: Optional[str] = None,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    instagram_handle: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Update specific fields of a user's profile."""
+    payload: dict[str, Any] = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if username is not None:
+        payload["username"] = username
+    if latitude is not None and longitude is not None:
+        payload["location"] = f"POINT({longitude} {latitude})"
+    if instagram_handle is not None:
+        payload["instagram_handle"] = instagram_handle
+
+    url = f"{_rest_base()}/{PROFILES_TABLE}"
+    query = {"id": f"eq.{user_id}"}
+    headers = _headers() | {"Prefer": "return=representation"}
+    resp = requests.patch(
+        url + "?" + urlencode(query), json=payload, headers=headers, timeout=10
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data[0] if isinstance(data, list) and data else None
+
+
 def get_profiles_by_ids(user_ids: list[str]) -> list[dict[str, Any]]:
     if not user_ids:
         return []
