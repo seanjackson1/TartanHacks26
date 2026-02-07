@@ -21,8 +21,20 @@ class Settings(BaseSettings):
     spotipy_client_id: str = ""
     spotipy_client_secret: str = ""
 
+    # GitHub (optional)
+    github_client_id: str = ""
+    github_client_secret: str = ""
+
+    # Google / YouTube (optional)
+    google_client_id: str = ""
+    google_client_secret: str = ""
+
     # Steam (optional)
     steam_api_key: str = ""
+
+    # OAuth settings
+    oauth_redirect_base_url: str = "http://localhost:8000"
+    oauth_state_secret: str = "change-me"
 
     # App settings
     debug: bool = False
