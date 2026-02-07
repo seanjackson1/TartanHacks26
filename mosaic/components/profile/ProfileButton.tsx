@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppStore } from "@/store/useAppStore";
-import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles } from "lucide-react";
+import { MapPin, User, Instagram, X, LogOut, Pencil, Save, Loader2, Check, Youtube, Gamepad2, Github, Music, Sparkles, MessageCircle } from "lucide-react";
 import { siDiscord } from "simple-icons/icons";
 import { supabase } from "@/lib/supabase";
 import { api, ConnectionsResponse } from "@/lib/api";
