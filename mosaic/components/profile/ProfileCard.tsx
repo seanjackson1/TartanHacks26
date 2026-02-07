@@ -1,12 +1,49 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useAppStore } from "@/store/useAppStore";
 import { MessageCircle } from "lucide-react";
+import { api } from "@/lib/api";
 
 export default function ProfileCard() {
   const { selectedMatch, setSelectedMatch, isOnboarding, setChatRecipientId } = useAppStore();
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
+  // Fetch similarity summary when a match is selected
+  useEffect(() => {
+    if (!selectedMatch) {
+      setSummary(null);
+      return;
+    }
+
+    // Check if we already have a cached summary
+    if (selectedMatch.similarity_summary) {
+      setSummary(selectedMatch.similarity_summary);
+      return;
+    }
+
+    const fetchSummary = async () => {
+      setLoadingSummary(true);
+      try {
+        const result = await api.getSimilaritySummary(selectedMatch.user.id);
+        if (result?.summary) {
+          setSummary(result.summary);
+          // Cache it in the match object for later
+          selectedMatch.similarity_summary = result.summary;
+        }
+      } catch (err) {
+        console.error("Failed to fetch similarity summary:", err);
+        setSummary("You both share similar interests.");
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    fetchSummary();
+  }, [selectedMatch]);
 
   if (isOnboarding) return null;
 
@@ -94,6 +131,20 @@ export default function ProfileCard() {
             </button>
           </div>
 
+          {/* Similarity Summary */}
+          <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+            <span className="text-xs uppercase tracking-wider text-foreground/50">
+              What You Have In Common
+            </span>
+            <p className="text-sm text-foreground/80 mt-1 italic">
+              {loadingSummary ? (
+                <span className="animate-pulse">Finding what you have in common...</span>
+              ) : (
+                summary || "You both share similar interests."
+              )}
+            </p>
+          </div>
+
           {/* Interests */}
           {Array.isArray(selectedMatch.user.metadata?.top_interests) && (
             <div>
@@ -156,4 +207,3 @@ export default function ProfileCard() {
     </AnimatePresence>
   );
 }
-

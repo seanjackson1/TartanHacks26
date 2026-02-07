@@ -140,5 +140,7 @@ export const api = {
       `/messages/read/${otherUserId}?user_id=${userId}`,
       {}
     ),
+  getSimilaritySummary: (otherUserId: string) =>
+    get<{ summary: string }>(`/match/${otherUserId}/summary`),
 };
 
