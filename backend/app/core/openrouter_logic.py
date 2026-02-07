@@ -86,44 +86,53 @@ def generate_profile_summary(
     return content.strip()
 
 
-def generate_similarity_summary(dna_string_1: str, dna_string_2: str) -> str:
+def generate_similarity_summary(interests_1: list[str], interests_2: list[str]) -> str:
     """Generate a 1-sentence summary of what two users have in common.
     
     Args:
-        dna_string_1: First user's profile DNA string
-        dna_string_2: Second user's profile DNA string
+        interests_1: First user's all_interests list
+        interests_2: Second user's all_interests list
     
     Returns:
         A short sentence describing shared interests/traits
     """
-    if not dna_string_1 or not dna_string_2:
+    if not interests_1 or not interests_2:
         return "You both share similar interests."
+    
+    # Truncate long lists to avoid token limits
+    interests_1_str = ", ".join(interests_1[:40])
+    interests_2_str = ", ".join(interests_2[:40])
     
     client = _client()
     system = (
-        "You are a helpful assistant. Given two user profiles, write a short, friendly sentence "
-        "describing what they have in common. Be specific about their shared interests or traits. "
-        "Examples: 'You both enjoy competitive gaming and following tech YouTubers.' or "
-        "'You both are into fitness and share a love for indie music.' "
-        "Start with 'You both' and keep it conversational."
+        "You are a helpful assistant comparing two users' interests. Write a friendly, medium-length "
+        "sentence (20-35 words) about what they have in common. "
+        "PRIORITY ORDER for matches: "
+        "1) Same games (e.g. both have 'Terraria' or 'Counter-Strike') - great conversation starters! "
+        "2) Same Discord servers (e.g. both in 'CMU Esports') - they might already know each other! "
+        "3) Same YouTube channels/subscriptions (e.g. both watch 'FitnessFAQs') "
+        "4) Same hobbies (e.g. both like 'hiking' or 'calisthenics') "
+        "Name 2-4 SPECIFIC shared items from their lists. Do NOT be generic. "
+        "Start with 'You both' and mention why these matches could spark a connection."
     )
     
     response = client.chat.completions.create(
         model=TEXT_MODEL,
         temperature=0.4,
-        max_tokens=80,
+        max_tokens=100,
         messages=[
             {"role": "system", "content": system},
             {
                 "role": "user",
                 "content": (
-                    f"User 1: {dna_string_1}\n\n"
-                    f"User 2: {dna_string_2}\n\n"
-                    "What do they have in common?"
+                    f"User 1 interests: {interests_1_str}\n\n"
+                    f"User 2 interests: {interests_2_str}\n\n"
+                    "What specific things do they have in common?"
                 ),
             },
         ],
     )
     content = response.choices[0].message.content or ""
     return content.strip()
+
 

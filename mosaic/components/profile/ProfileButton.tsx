@@ -60,6 +60,7 @@ export default function ProfileButton() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
         setIsEditing(false);
+        setIsEditingInterests(false);
       }
     };
     if (isOpen) {
@@ -134,6 +135,11 @@ export default function ProfileButton() {
   };
 
   const handleEditInterests = async () => {
+    if (isEditingInterests) {
+      setIsEditingInterests(false);
+      return;
+    }
+    setIsEditing(false);
     // Load current interests from profile
     const profile = await api.getProfile();
     const allInterests = (profile?.metadata as { all_interests?: string[] } | undefined)?.all_interests || [];
@@ -243,7 +249,14 @@ export default function ProfileButton() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              setIsOpen(!isOpen);
+              setIsMessagingCenterOpen(false);
+              if (isOpen) {
+                setIsEditing(false);
+                setIsEditingInterests(false);
+              }
+            }}
             className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 bg-gray-900 transition-all hover:border-cyan-400"
           >
             {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
@@ -272,7 +285,12 @@ export default function ProfileButton() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setIsMessagingCenterOpen(!isMessagingCenterOpen)}
+            onClick={() => {
+              setIsMessagingCenterOpen(!isMessagingCenterOpen);
+              setIsOpen(false);
+              setIsEditing(false);
+              setIsEditingInterests(false);
+            }}
             className="relative w-10 h-10 rounded-full flex items-center justify-center border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10 bg-gray-900/90 backdrop-blur-sm transition-all hover:border-cyan-400 hover:bg-gray-800/90"
           >
             <MessageCircle className="w-5 h-5 text-cyan-400" />
@@ -289,249 +307,389 @@ export default function ProfileButton() {
       {/* Dropdown Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-[1001] w-full h-full md:absolute md:inset-auto md:top-28 md:left-0 md:w-72 md:h-auto md:rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden flex flex-col md:block"
-          >
-            {/* Header with avatar */}
-            <div className="relative p-4 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border-b border-white/10">
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  setIsEditing(false);
-                }}
-                className="absolute top-2 right-2 p-1 rounded-full hover:bg-white/10 transition-colors"
+          <div className="absolute top-[6.5rem] left-0 w-72">
+            <div className="relative w-72">
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
               >
-                <X className="w-4 h-4 text-white/60" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/20">
-                  {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
-                    <Image
-                      src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
-                      alt={currentUser.username || "Profile"}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-cover"
-                      unoptimized={false}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
-                      <span className="text-white font-bold text-xl">
-                        {getInitials(currentUser.username)}
-                      </span>
+                {/* Header with avatar */}
+                <div className="relative p-4 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border-b border-white/10">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsEditing(false);
+                      setIsEditingInterests(false);
+                    }}
+                    className="absolute top-2 right-2 p-1 rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white/60" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/20">
+                      {(currentUser.avatar_url || currentUser.metadata?.avatar_url) ? (
+                        <Image
+                          src={(currentUser.avatar_url || currentUser.metadata?.avatar_url) as string}
+                          alt={currentUser.username || "Profile"}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                          unoptimized={false}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
+                          <span className="text-white font-bold text-xl">
+                            {getInitials(currentUser.username)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                      className="w-full bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white font-semibold text-lg focus:outline-none focus:border-cyan-500"
-                      placeholder="Username"
-                    />
-                  ) : (
-                    <>
+                    <div className="flex-1">
                       <h3 className="text-white font-semibold text-lg">
                         {currentUser.username}
                       </h3>
                       <span className="text-xs text-cyan-400 font-mono">CONNECTED</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Info Items */}
-            <div className="p-3 space-y-1">
-              {/* Location */}
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                  <MapPin className="w-4 h-4 text-cyan-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-xs text-white/50 uppercase tracking-wider">Location</div>
-                  {isEditing ? (
-                    <div className="flex gap-2 mt-1">
-                      <input
-                        type="text"
-                        value={editLatitude}
-                        onChange={(e) => setEditLatitude(e.target.value)}
-                        className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
-                        placeholder="Lat"
-                      />
-                      <input
-                        type="text"
-                        value={editLongitude}
-                        onChange={(e) => setEditLongitude(e.target.value)}
-                        className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
-                        placeholder="Lng"
-                      />
                     </div>
-                  ) : (
-                    <div className="text-white text-sm font-mono">
-                      {currentUser.latitude.toFixed(4)}, {currentUser.longitude.toFixed(4)}
+                  </div>
+                </div>
+
+                {/* Info Items */}
+                <div className="p-3 space-y-1">
+                  {/* Location */}
+                  <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-cyan-400" />
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className="flex-1">
+                      <div className="text-xs text-white/50 uppercase tracking-wider">Location</div>
+                      <div className="text-white text-sm font-mono">
+                        {currentUser.latitude.toFixed(4)}, {currentUser.longitude.toFixed(4)}
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Instagram */}
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                  <Instagram className="w-4 h-4 text-pink-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-xs text-white/50 uppercase tracking-wider">Instagram</div>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editInstagram}
-                      onChange={(e) => setEditInstagram(e.target.value)}
-                      className="w-full bg-black/30 border border-white/20 rounded-lg px-2 py-1 text-white text-sm mt-1 focus:outline-none focus:border-cyan-500"
-                      placeholder="@username"
-                    />
-                  ) : currentUser.instagram_handle ? (
-                    <a
-                      href={`https://instagram.com/${currentUser.instagram_handle.replace(/^@/, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white text-sm hover:text-pink-400 transition-colors"
-                    >
-                      @{currentUser.instagram_handle.replace(/^@/, '')}
-                    </a>
-                  ) : (
-                    <span className="text-white/40 text-sm">Not set</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Connected Apps */}
-              {!isEditing && (
-                <div className="mt-3 pt-3 border-t border-white/10">
-                  <div className="text-xs text-white/50 uppercase tracking-wider px-3 mb-2">Connected Apps</div>
-                  <div className="space-y-1">
-                    {["youtube", "steam", "github", "spotify", "discord"].map((provider) => {
-                      const isConnected = connections?.connected.includes(provider);
-                      const isConnecting = connectingProvider === provider;
-                      return (
-                        <div
-                          key={provider}
-                          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors"
+                  {/* Instagram */}
+                  <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                      <Instagram className="w-4 h-4 text-pink-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs text-white/50 uppercase tracking-wider">Instagram</div>
+                      {currentUser.instagram_handle ? (
+                        <a
+                          href={`https://instagram.com/${currentUser.instagram_handle.replace(/^@/, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white text-sm hover:text-pink-400 transition-colors"
                         >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getProviderColor(provider)}`}>
-                            {getProviderIcon(provider)}
-                          </div>
-                          <span className="flex-1 text-white text-sm capitalize">{provider}</span>
-                          {isConnected ? (
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium">
-                              <Check className="w-3 h-3" /> Connected
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleConnect(provider)}
-                              disabled={isConnecting}
-                              className="px-4 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-all disabled:opacity-50"
+                          @{currentUser.instagram_handle.replace(/^@/, '')}
+                        </a>
+                      ) : (
+                        <span className="text-white/40 text-sm">Not set</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Connected Apps */}
+                  {(
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <div className="text-xs text-white/50 uppercase tracking-wider px-3 mb-2">Connected Apps</div>
+                      <div className="space-y-1">
+                        {["youtube", "steam", "github", "spotify", "discord"].map((provider) => {
+                          const isConnected = connections?.connected.includes(provider);
+                          const isConnecting = connectingProvider === provider;
+                          return (
+                            <div
+                              key={provider}
+                              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors"
                             >
-                              {isConnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
-                            </button>
-                          )}
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getProviderColor(provider)}`}>
+                                {getProviderIcon(provider)}
+                              </div>
+                              <span className="flex-1 text-white text-sm capitalize">{provider}</span>
+                              {isConnected ? (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium">
+                                  <Check className="w-3 h-3" /> Connected
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleConnect(provider)}
+                                  disabled={isConnecting}
+                                  className="px-4 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-all disabled:opacity-50"
+                                >
+                                  {isConnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="p-3 pt-0 space-y-2">
+                  <button
+                    onClick={() => {
+                      setIsEditing((prev) => !prev);
+                      setIsEditingInterests(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {isEditing ? "Close Edit Profile" : "Edit Profile"}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={handleEditInterests}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 transition-colors"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {isEditingInterests ? "Close Edit Interests" : "Edit Interests"}
+                    </span>
+                  </button>
+
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+
+                  {/* Mobile foldouts */}
+                  {isEditing && (
+                    <div className="sm:hidden mt-2 space-y-3">
+                      <div>
+                        <div className="text-xs text-white/50 uppercase tracking-wider">Username</div>
+                        <input
+                          type="text"
+                          value={editUsername}
+                          onChange={(e) => setEditUsername(e.target.value)}
+                          className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editLatitude}
+                          onChange={(e) => setEditLatitude(e.target.value)}
+                          className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                          placeholder="Lat"
+                        />
+                        <input
+                          type="text"
+                          value={editLongitude}
+                          onChange={(e) => setEditLongitude(e.target.value)}
+                          className="w-1/2 bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                          placeholder="Lng"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs text-white/50 uppercase tracking-wider">Instagram</div>
+                        <input
+                          type="text"
+                          value={editInstagram}
+                          onChange={(e) => setEditInstagram(e.target.value)}
+                          className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+                          placeholder="@username"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleCancel}
+                          disabled={isSaving}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                        >
+                          <span className="text-sm">Cancel</span>
+                        </button>
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                        >
+                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          <span className="text-sm">Save</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isEditingInterests && (
+                    <div className="sm:hidden mt-2 space-y-3">
+                      <div className="text-xs text-white/50 uppercase tracking-wider">Edit Interests (comma-separated)</div>
+                      <textarea
+                        value={interestsRaw}
+                        onChange={(e) => setInterestsRaw(e.target.value)}
+                        placeholder="hiking, gaming, AI/ML, music..."
+                        rows={4}
+                        className="w-full bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setIsEditingInterests(false)}
+                          disabled={isSavingInterests}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                        >
+                          <span className="text-sm">Cancel</span>
+                        </button>
+                        <button
+                          onClick={handleSaveInterests}
+                          disabled={isSavingInterests}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                        >
+                          {isSavingInterests ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          <span className="text-sm">Save</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+              <AnimatePresence mode="sync">
+                {isEditing && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10, scale: 0.98 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.1 }}
+                    className="hidden sm:block absolute top-0 left-full w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
+                  >
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                      <div className="text-sm text-white/70 uppercase tracking-wider">
+                        Edit Profile
+                      </div>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white/60" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="text-xs text-white/50 uppercase tracking-wider">Username</label>
+                        <input
+                          type="text"
+                          value={editUsername}
+                          onChange={(e) => setEditUsername(e.target.value)}
+                          className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-xs text-white/50 uppercase tracking-wider">Latitude</label>
+                          <input
+                            type="text"
+                            value={editLatitude}
+                            onChange={(e) => setEditLatitude(e.target.value)}
+                            className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+                        <div className="flex-1">
+                          <label className="text-xs text-white/50 uppercase tracking-wider">Longitude</label>
+                          <input
+                            type="text"
+                            value={editLongitude}
+                            onChange={(e) => setEditLongitude(e.target.value)}
+                            className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-white/50 uppercase tracking-wider">Instagram</label>
+                        <input
+                          type="text"
+                          value={editInstagram}
+                          onChange={(e) => setEditInstagram(e.target.value)}
+                          className="mt-1 w-full bg-black/30 border border-white/20 rounded-lg px-2 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+                          placeholder="@username"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={handleCancel}
+                          disabled={isSaving}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                        >
+                          <span className="text-sm">Cancel</span>
+                        </button>
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                        >
+                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          <span className="text-sm">Save</span>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Action Buttons */}
-            <div className="p-3 pt-0 space-y-2">
-              {isEditing ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCancel}
-                    disabled={isSaving}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+              <AnimatePresence mode="sync">
+                {isEditingInterests && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10, scale: 0.98 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.1 }}
+                    className="hidden sm:block absolute top-0 left-full w-72 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
                   >
-                    <span className="text-sm font-medium">Cancel</span>
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    <span className="text-sm font-medium">Save</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                  <span className="text-sm font-medium">Edit Profile</span>
-                </button>
-              )}
-
-              {/* Edit Interests */}
-              {isEditingInterests ? (
-                <div className="space-y-2">
-                  <div className="text-xs text-white/50 uppercase tracking-wider">Edit Interests (comma-separated)</div>
-                  <textarea
-                    value={interestsRaw}
-                    onChange={(e) => setInterestsRaw(e.target.value)}
-                    placeholder="hiking, gaming, AI/ML, music..."
-                    rows={3}
-                    className="w-full bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setIsEditingInterests(false)}
-                      disabled={isSavingInterests}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
-                    >
-                      <span className="text-sm">Cancel</span>
-                    </button>
-                    <button
-                      onClick={handleSaveInterests}
-                      disabled={isSavingInterests}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
-                    >
-                      {isSavingInterests ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      <span className="text-sm">Save</span>
-                    </button>
-                  </div>
-                </div>
-              ) : !isEditing && (
-                <button
-                  onClick={handleEditInterests}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 transition-colors"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span className="text-sm font-medium">Edit Interests</span>
-                </button>
-              )}
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm font-medium">Sign Out</span>
-              </button>
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                      <div className="text-sm text-white/70 uppercase tracking-wider">
+                        Edit Interests
+                      </div>
+                      <button
+                        onClick={() => setIsEditingInterests(false)}
+                        className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white/60" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div className="text-xs text-white/50 uppercase tracking-wider">
+                        Edit Interests (comma-separated)
+                      </div>
+                      <textarea
+                        value={interestsRaw}
+                        onChange={(e) => setInterestsRaw(e.target.value)}
+                        placeholder="hiking, gaming, AI/ML, music..."
+                        rows={6}
+                        className="w-full bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setIsEditingInterests(false)}
+                          disabled={isSavingInterests}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 transition-colors"
+                        >
+                          <span className="text-sm">Cancel</span>
+                        </button>
+                        <button
+                          onClick={handleSaveInterests}
+                          disabled={isSavingInterests}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 transition-colors"
+                        >
+                          {isSavingInterests ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          <span className="text-sm">Save</span>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

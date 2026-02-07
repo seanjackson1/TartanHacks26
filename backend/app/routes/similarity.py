@@ -38,12 +38,21 @@ def get_similarity_summary(
     if not other_profile:
         raise HTTPException(status_code=404, detail="Other user profile not found")
     
-    current_dna = current_profile.get("dna_string") or ""
-    other_dna = other_profile.get("dna_string") or ""
+    # Get interests from metadata
+    current_metadata = current_profile.get("metadata") or {}
+    other_metadata = other_profile.get("metadata") or {}
+    
+    current_interests = current_metadata.get("all_interests") or []
+    other_interests = other_metadata.get("all_interests") or []
+    
+    print(f"DEBUG similarity: current_interests count={len(current_interests)}, other_interests count={len(other_interests)}")
+    print(f"DEBUG similarity: current_interests sample={current_interests[:5] if current_interests else 'EMPTY'}")
+    print(f"DEBUG similarity: other_interests sample={other_interests[:5] if other_interests else 'EMPTY'}")
     
     # Generate similarity summary using LLM
     try:
-        summary = generate_similarity_summary(current_dna, other_dna)
+        summary = generate_similarity_summary(current_interests, other_interests)
+        print(f"DEBUG similarity: generated summary={summary}")
     except Exception as exc:
         print(f"DEBUG: similarity summary generation failed: {exc}")
         summary = "You both share similar interests."
