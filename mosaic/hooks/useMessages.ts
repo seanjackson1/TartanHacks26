@@ -30,6 +30,8 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
     useEffect(() => {
         if (!userId || !recipientId) return;
 
+        console.log("[DEBUG] loadHistory effect running", { userId, recipientId });
+
         const loadHistory = async () => {
             setIsLoading(true);
             try {
@@ -38,6 +40,7 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                 );
                 if (res.ok) {
                     const data = await res.json();
+                    console.log("[DEBUG] loadHistory overwriting messages with", data.length, "messages from DB");
                     setMessages(data);
                 }
             } catch (err) {
@@ -66,18 +69,57 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    console.log("[DEBUG] WS onmessage received:", data);
+                    console.log("[DEBUG] Current recipientId in closure:", recipientId);
+
                     if (data.type === "new_message" && data.message) {
                         const msg = data.message as Message;
-                        // Only add if it's part of this conversation
-                        if (
+
+                        const isPartOfConversation =
                             (msg.sender_id === userId && msg.receiver_id === recipientId) ||
-                            (msg.sender_id === recipientId && msg.receiver_id === userId)
-                        ) {
+                            (msg.sender_id === recipientId && msg.receiver_id === userId);
+
+                        console.log("[DEBUG] Filter check:", {
+                            msgSenderId: msg.sender_id,
+                            msgReceiverId: msg.receiver_id,
+                            userId,
+                            recipientId,
+                            isPartOfConversation
+                        });
+
+                        // Only add if it's part of this conversation
+                        if (isPartOfConversation) {
                             setMessages((prev) => {
-                                // Avoid duplicates
-                                if (prev.some((m) => m.id === msg.id)) return prev;
+                                console.log("[DEBUG] setMessages called, prev has", prev.length, "messages");
+                                console.log("[DEBUG] prev message IDs:", prev.map(m => m.id));
+
+                                // Check if we already have this message (by real ID)
+                                if (prev.some((m) => m.id === msg.id)) {
+                                    console.log("[DEBUG] Message already exists, skipping");
+                                    return prev;
+                                }
+
+                                // If this is our own message, replace the optimistic one
+                                if (msg.sender_id === userId) {
+                                    // Find and replace optimistic message with same content
+                                    const optimisticIdx = prev.findIndex(
+                                        (m) => m.id.startsWith("temp-") && m.content === msg.content
+                                    );
+                                    console.log("[DEBUG] Looking for optimistic msg, found at idx:", optimisticIdx);
+                                    if (optimisticIdx !== -1) {
+                                        console.log("[DEBUG] Replacing optimistic message at index", optimisticIdx);
+                                        const updated = [...prev];
+                                        updated[optimisticIdx] = msg;
+                                        return updated;
+                                    }
+                                }
+
+                                // Otherwise just add the new message
+                                console.log("[DEBUG] Adding new message to end");
                                 return [...prev, msg];
                             });
+                        } else {
+                            console.log("[DEBUG] Message filtered out - not part of current conversation");
                         }
                     }
                 } catch (err) {
@@ -118,6 +160,20 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                 return;
             }
 
+            // Optimistic update: add message immediately to show in UI
+            const optimisticMessage: Message = {
+                id: `temp-${Date.now()}`, // Temporary ID until server confirms
+                sender_id: userId,
+                receiver_id: recipientId,
+                content,
+                created_at: new Date().toISOString(),
+            };
+            console.log("[DEBUG] sendMessage: Adding optimistic message", optimisticMessage.id);
+            setMessages((prev) => {
+                console.log("[DEBUG] sendMessage: prev had", prev.length, "messages, adding optimistic");
+                return [...prev, optimisticMessage];
+            });
+
             wsRef.current.send(
                 JSON.stringify({
                     type: "send",
@@ -125,8 +181,9 @@ export function useMessages({ userId, recipientId }: UseMessagesOptions): UseMes
                     content,
                 })
             );
+            console.log("[DEBUG] sendMessage: Sent to WebSocket");
         },
-        [recipientId]
+        [recipientId, userId]
     );
 
     return {
