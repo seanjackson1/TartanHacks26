@@ -284,11 +284,18 @@ def main() -> None:
     email_domains = ["gmail.com"]
 
     users = []
+    seen_handles = set()
+    seen_emails = set()
     for i in range(1000):
-        first = random.choice(first_names)
-        last = random.choice(last_names)
-        handle = f"{first.lower()}.{last.lower()}{random.randint(1,999)}"
-        email = f"{handle}@{random.choice(email_domains)}"
+        while True:
+            first = random.choice(first_names)
+            last = random.choice(last_names)
+            handle = f"{first.lower()}.{last.lower()}{random.randint(1,999)}"
+            email = f"{handle}@{random.choice(email_domains)}"
+            if handle not in seen_handles and email not in seen_emails:
+                seen_handles.add(handle)
+                seen_emails.add(email)
+                break
         display_name = f"{first} {last}"
         bios = [
             "Curious about tech, design, and people.",
