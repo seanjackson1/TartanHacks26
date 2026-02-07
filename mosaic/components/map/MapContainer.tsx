@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L, { latLngBounds } from "leaflet";
@@ -19,8 +19,10 @@ import AnimatedMarker from "./AnimatedMarker";
 function FlyToHandler() {
   const map = useMap();
   const selectedMatch = useAppStore((s) => s.selectedMatch);
+  const prevSelectedMatch = useRef(selectedMatch);
 
   useEffect(() => {
+    // Zoom in when selecting a match
     if (
       selectedMatch &&
       Number.isFinite(selectedMatch.user.latitude) &&
@@ -32,6 +34,12 @@ function FlyToHandler() {
         { duration: 1.5 }
       );
     }
+    // Zoom out to level 3 when closing profile (match goes from selected to null)
+    else if (!selectedMatch && prevSelectedMatch.current) {
+      map.flyTo(map.getCenter(), 3, { duration: 1.5 });
+    }
+
+    prevSelectedMatch.current = selectedMatch;
   }, [selectedMatch, map]);
 
   return null;
