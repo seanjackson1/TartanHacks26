@@ -191,6 +191,23 @@ class InterestCreate(BaseModel):
     raw_text: str
 
 
+# --- OAuth ---
+
+
+class OAuthRefreshRequest(BaseModel):
+    """Request body for POST /auth/{provider}/refresh."""
+
+    user_id: UUID
+
+
+class OAuthCallbackResponse(BaseModel):
+    """Response body for OAuth callbacks."""
+
+    connected: bool
+    provider: str
+    provider_user_id: str
+
+
 # ============================================================================
 # Matching Algorithm Constants (from CLAUDE.md)
 # ============================================================================
