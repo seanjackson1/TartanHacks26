@@ -62,17 +62,41 @@ export default function MessagingCenter() {
     if (match) {
       setSelectedMatch(match);
     } else {
-      // Create a minimal match-like object so ChatPanel can display the name
-      setSelectedMatch({
-        user: {
-          id: conv.user_id,
-          username: conv.username,
-          avatar_url: conv.avatar_url,
-          latitude: 0,
-          longitude: 0,
-        },
-        similarity_score: 0,
-      });
+      // Try to fetch public profile if not in matches (e.g. from search results)
+      try {
+        const profile = await api.getPublicProfile(conv.user_id);
+        if (profile) {
+          setSelectedMatch({
+            user: profile,
+            similarity_score: 0, // Fallback for non-match users
+          });
+        } else {
+          // Fallback if fetch fails (shouldn't happen if user exists)
+           setSelectedMatch({
+            user: {
+              id: conv.user_id,
+              username: conv.username,
+              avatar_url: conv.avatar_url,
+              latitude: 0,
+              longitude: 0,
+            },
+            similarity_score: 0,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile for chat:", err);
+        // Fallback to minimal data from conversation
+        setSelectedMatch({
+            user: {
+              id: conv.user_id,
+              username: conv.username,
+              avatar_url: conv.avatar_url,
+              latitude: 0,
+              longitude: 0,
+            },
+            similarity_score: 0,
+          });
+      }
     }
 
     setChatRecipientId(conv.user_id);
